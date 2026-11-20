@@ -10,7 +10,7 @@
 
   // Baza de date D1. După `npx wrangler d1 create cpcredit`, pune aici database_id primit.
   "d1_databases": [
-    { "binding": "DB", "database_name": "cpcredit", "database_id": "PUNE-AICI-ID-UL-D1", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "cpcredit", "database_id": "a28a0c3a-d76a-4e2d-9cff-407858f72084", "migrations_dir": "migrations" }
   ],
 
   // Bucketul R2 separat pentru fișierele încărcate pe dosare.
