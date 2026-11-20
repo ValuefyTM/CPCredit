@@ -28,3 +28,15 @@ a:hover { color: #0B6B4A; }
 .fx:focus-visible, .nv:focus-visible { outline: 2px solid #5B8DEF; outline-offset: 2px; }
 .bt { box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; font: inherit; font-weight: 600; text-decoration: none; }
 .in { height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D3D8E0; border-radius: 12px; font: inherit; background: #FFFFFF; color: #10151C; }
+
+/* Ecranul de autentificare */
+#login { flex: 1 1 100%; min-height: 100vh; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: #0B0F1A; }
+#login form { width: 100%; max-width: 380px; padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+#login label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; color: #5B6472; }
+#login input { box-sizing: border-box; height: 44px; border: 1px solid #D3D8E0; border-radius: 12px; padding: 0 14px; font: inherit; font-size: 15px; color: #0B0F1A; }
+#login input:focus { outline: 2px solid #0B6B4A; outline-offset: 1px; }
+#login .err { border-radius: 12px; background: #FFF1E8; color: #7C2D12; padding: 10px 12px; line-height: 1.5; }
+#nav .nav-meta .logout { align-self: flex-start; margin-top: 4px; border: 0; background: none; padding: 0; font: inherit; font-size: 12px; font-weight: 600; color: #D8C07A; cursor: pointer; }
+#nav .nav-meta .logout:hover { text-decoration: underline; }
+
+[hidden] { display: none !important; }

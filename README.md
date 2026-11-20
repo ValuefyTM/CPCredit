@@ -4,13 +4,13 @@ Platformă pentru broker de credite: dosare, clienți, radar de refinanțare, si
 
 Rulează pe Cloudflare: un Worker (API + interfață), o bază de date D1 pentru dosare și ce introduce brokerul, și un bucket R2 separat pentru fișierele încărcate pe dosare.
 
-> **Stadiu:** publicată în Cloudflare (Worker `cpcredit`, D1 `cpcredit`, R2 `cpcredit-files`), încă fără Cloudflare Access configurat. Testată local cu `wrangler dev`: importul exportului eKIWI, toate ecranele, salvarea după reîncărcare, fișierele pe dosar și ecranul Utilizatori. Verificarea Cloudflare Access a fost testată doar cu chei generate local.
+> **Stadiu:** publicată în Cloudflare (Worker `cpcredit`, D1 `cpcredit`, R2 `cpcredit-files`). Login cu email și o parolă comună temporară; urmează codul trimis pe email prin Resend. Testată local cu `wrangler dev`: importul exportului eKIWI, toate ecranele, salvarea după reîncărcare, fișierele pe dosar, login-ul și ecranul Utilizatori.
 
 ## Structură
 
 | Cale | Ce conține |
 |---|---|
-| `src/worker.js` | API-ul de sub `/api/*`, verificarea Cloudflare Access și utilizatorii |
+| `src/worker.js` | API-ul de sub `/api/*`, autentificarea și utilizatorii |
 | `migrations/` | Schema bazei de date D1 |
 | `web/screens/*.html` | Ecranele: șablon + logica fiecăruia |
 | `web/runtime.js` | Motorul interfeței: desenare, navigare, salvare |
@@ -38,13 +38,12 @@ Local, D1 și R2 sunt simulate pe disc, în `.wrangler/`.
 2. **Bucketul de fișiere:** `npx wrangler r2 bucket create cpcredit-files`.
 3. **Schema:** `npm run db:migrate`.
 4. **Publicare:** `npm run deploy`.
-5. **Autentificare:** în Cloudflare Zero Trust, creează o aplicație Access de tip *Self-hosted* pe adresa Worker-ului, cu login prin *One-time PIN* (cod pe email). Politica poate permite orice email (*Everyone*): cine intră efectiv decide platforma, din ecranul **Utilizatori**. Copiază în `wrangler.jsonc`:
-   - `ACCESS_TEAM_DOMAIN`: domeniul echipei, de forma `nume.cloudflareaccess.com`;
-   - `ACCESS_AUD`: valoarea *Application Audience (AUD)* a aplicației.
+5. **Autentificare:** setează cele două secrete (nu stau în repo):
+   - `npx wrangler secret put LOGIN_PASSWORD`: parola de intrare. E temporară și comună tuturor, până la login cu cod pe email (Resend);
+   - `npx wrangler secret put ADMIN_EMAILS`: emailurile primilor administratori, separate prin virgulă. La prima intrare devin administratori.
 
-   Apoi publică din nou. Până când aceste două valori sunt setate, API-ul refuză orice cerere.
-6. **Primul administrator:** `npx wrangler secret put ADMIN_EMAILS`, cu emailul tău (mai multe, separate prin virgulă). La prima intrare devii administrator.
-7. **Date:** deschide platforma, mergi la **Import date** și încarcă exportul eKIWI.
+   Fără `LOGIN_PASSWORD` nu poate intra nimeni.
+6. **Date:** deschide platforma, mergi la **Import date** și încarcă exportul eKIWI.
 
 ## Utilizatori
 
@@ -55,7 +54,7 @@ Ecranul **Utilizatori** apare doar administratorilor. Acolo se adaugă, se dezac
 | Administrator | Tot, plus gestionarea utilizatorilor |
 | Utilizator | Toată platforma: dosare, clienți, radar, oferte, rapoarte, import |
 
-Cine se autentifică prin Access dar nu e un utilizator activ primește „Acces refuzat”. Platforma rămâne mereu cu cel puțin un administrator activ, iar un administrator nu își poate scoate singur drepturile.
+Intrarea se face cu emailul și parola, apoi platforma ține o sesiune de 30 de zile într-un cookie. Intră doar utilizatorii activi: un cont dezactivat sau șters pierde accesul imediat, chiar dacă avea sesiunea deschisă. După 5 parole greșite pe același email, contul se blochează 15 minute. Platforma rămâne mereu cu cel puțin un administrator activ, iar un administrator nu își poate scoate singur drepturile.
 
 ## Import
 

@@ -18,14 +18,10 @@
     { "binding": "FILES", "bucket_name": "cpcredit-files" }
   ],
 
-  // Cloudflare Access. Fără aceste două valori, API-ul refuză orice cerere.
-  "vars": {
-    "ACCESS_TEAM_DOMAIN": "",   // de exemplu "firma.cloudflareaccess.com"
-    "ACCESS_AUD": ""            // eticheta „Application Audience (AUD)” a aplicației din Access
-  },
-  // Administratorii de pornire nu stau în repo: se setează ca secret,
-  // `npx wrangler secret put ADMIN_EMAILS` (adrese separate prin virgulă).
-  // Restul utilizatorilor se adaugă din ecranul Utilizatori.
+  // Autentificarea folosește două secrete, care nu stau în repo:
+  //   npx wrangler secret put LOGIN_PASSWORD   - parola de intrare (temporară, până la cod pe email)
+  //   npx wrangler secret put ADMIN_EMAILS     - primii administratori, separați prin virgulă
+  // Fără LOGIN_PASSWORD nu poate intra nimeni. Restul utilizatorilor se adaugă din ecranul Utilizatori.
 
   "observability": { "enabled": true }
 }

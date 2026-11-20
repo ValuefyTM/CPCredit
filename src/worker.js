@@ -5,9 +5,9 @@
 //   DB    - baza de date D1 (dosare, stare salvată, evidența fișierelor)
 //   FILES - bucketul R2 cu fișierele încărcate pe dosare
 //
-// Autentificare: Cloudflare Access. Fiecare cerere către /api trebuie să aibă un JWT valid
-// emis de Access; fără ACCESS_TEAM_DOMAIN și ACCESS_AUD configurate, API-ul refuză tot.
-// Autorizare: emailul trebuie să fie un utilizator activ din tabela `users` (ecranul Utilizatori).
+// Autentificare: email + parolă la /api/auth/login, apoi o sesiune într-un cookie HttpOnly.
+// Doar utilizatorii activi din tabela `users` (ecranul Utilizatori) pot intra.
+// Secrete în Cloudflare: LOGIN_PASSWORD (parola temporară), ADMIN_EMAILS (primii administratori).
 
 const MAX_FILE = 25 * 1024 * 1024;
 const MAX_STATE = 1024 * 1024;
@@ -19,85 +19,117 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
 });
 const fail = (status, error, extra) => json({ error, ...extra }, status);
 
-// ---------- Autentificare (Cloudflare Access) ----------
+// ---------- Autentificare (email + parolă, sesiune în cookie) ----------
 
-let certs = { team: '', at: 0, keys: [] };
-
-function b64url(s) {
-  s = s.replace(/-/g, '+').replace(/_/g, '/');
-  const bin = atob(s + '='.repeat((4 - (s.length % 4)) % 4));
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-  return out;
-}
-
-async function accessKeys(team, force) {
-  if (!force && certs.team === team && Date.now() - certs.at < 3600e3) return certs.keys;
-  const r = await fetch(`https://${team}/cdn-cgi/access/certs`);
-  if (!r.ok) throw new Error('Nu pot citi cheile Cloudflare Access');
-  const body = await r.json();
-  certs = { team, at: Date.now(), keys: body.keys || [] };
-  return certs.keys;
-}
-
-async function verifyAccess(request, env) {
-  const token = request.headers.get('Cf-Access-Jwt-Assertion');
-  if (!token) return null;
-  const parts = token.split('.');
-  if (parts.length !== 3) return null;
-  const dec = new TextDecoder();
-  let header, payload;
-  try {
-    header = JSON.parse(dec.decode(b64url(parts[0])));
-    payload = JSON.parse(dec.decode(b64url(parts[1])));
-  } catch (e) { return null; }
-  if (header.alg !== 'RS256') return null;
-  const team = env.ACCESS_TEAM_DOMAIN;
-  let jwk = (await accessKeys(team, false)).find((k) => k.kid === header.kid);
-  if (!jwk) jwk = (await accessKeys(team, true)).find((k) => k.kid === header.kid);
-  if (!jwk) return null;
-  const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
-  const ok = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64url(parts[2]), new TextEncoder().encode(parts[0] + '.' + parts[1]));
-  if (!ok) return null;
-  const now = Math.floor(Date.now() / 1000);
-  if (!payload.exp || payload.exp < now) return null;
-  if (payload.iss !== `https://${team}`) return null;
-  const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
-  if (!aud.includes(env.ACCESS_AUD)) return null;
-  if (!payload.email) return null;
-  return { email: String(payload.email).toLowerCase() };
-}
+const SESSION_COOKIE = 'cp_session';
+const SESSION_DAYS = 30;
+const MAX_FAILS = 5;
+const LOCK_MINUTES = 15;
 
 const emailList = (s) => (s || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+
+async function sha256(s) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Comparație în timp constant, ca durata răspunsului să nu dea indicii despre parolă.
+async function sameSecret(a, b) {
+  const [x, y] = await Promise.all([sha256('cp:' + a), sha256('cp:' + b)]);
+  let diff = 0;
+  for (let i = 0; i < x.length; i++) diff |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return diff === 0;
+}
+
+function randomToken() {
+  const b = crypto.getRandomValues(new Uint8Array(32));
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function cookieOf(request, name) {
+  const all = request.headers.get('Cookie') || '';
+  for (const part of all.split(';')) {
+    const i = part.indexOf('=');
+    if (i > 0 && part.slice(0, i).trim() === name) return part.slice(i + 1).trim();
+  }
+  return '';
+}
+
+const sessionCookie = (value, maxAge) => `${SESSION_COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`;
 
 // Cine are voie înăuntru: utilizatorii activi din tabela `users`.
 // ADMIN_EMAILS (secret în Cloudflare) sunt administratorii de pornire: la prima intrare
 // sunt adăugați singuri în tabelă, ca să poată adăuga apoi restul echipei din ecranul Utilizatori.
-async function account(env, email) {
+async function account(env, email, touch) {
   let u = await env.DB.prepare('SELECT email, nume, rol, activ, last_seen FROM users WHERE email = ?').bind(email).first();
   if (!u && emailList(env.ADMIN_EMAILS).includes(email)) {
     await env.DB.prepare("INSERT OR IGNORE INTO users (email, rol, activ, created_at, created_by) VALUES (?, 'admin', 1, ?, 'ADMIN_EMAILS')").bind(email, nowIso()).run();
     u = await env.DB.prepare('SELECT email, nume, rol, activ, last_seen FROM users WHERE email = ?').bind(email).first();
   }
   if (!u || !u.activ) return null;
-  // Ultima intrare, actualizată cel mult o dată pe oră.
-  if (!u.last_seen || Date.now() - Date.parse(u.last_seen) > 3600e3) {
+  // Ultima activitate, actualizată cel mult o dată pe oră.
+  if (touch && (!u.last_seen || Date.now() - Date.parse(u.last_seen) > 3600e3)) {
     await env.DB.prepare('UPDATE users SET last_seen = ? WHERE email = ?').bind(nowIso(), email).run();
   }
   return { email: u.email, nume: u.nume || '', rol: u.rol };
 }
 
+async function login(request, env) {
+  // Parola comună, temporară, până la login cu cod pe email. Stă ca secret în Cloudflare.
+  if (!env.LOGIN_PASSWORD) return fail(503, 'Autentificarea nu este configurată (lipsește LOGIN_PASSWORD).');
+  const b = await body(request, 2_000);
+  const email = String(b.email || '').trim().toLowerCase().slice(0, 200);
+  const password = String(b.password || '');
+  if (!email || !password) return fail(400, 'Completează emailul și parola.');
+
+  const now = Date.now();
+  const att = await env.DB.prepare('SELECT fails, locked_until FROM login_attempts WHERE email = ?').bind(email).first();
+  if (att && att.locked_until && Date.parse(att.locked_until) > now) {
+    const min = Math.ceil((Date.parse(att.locked_until) - now) / 60000);
+    return fail(429, `Prea multe încercări greșite. Încearcă din nou peste ${min} min.`);
+  }
+
+  const okPass = await sameSecret(password, env.LOGIN_PASSWORD);
+  const user = okPass ? await account(env, email, true) : null;
+  if (!user) {
+    // Același mesaj pentru email necunoscut și parolă greșită.
+    const fails = (att && !(att.locked_until && Date.parse(att.locked_until) <= now) ? att.fails : 0) + 1;
+    const lock = fails >= MAX_FAILS ? new Date(now + LOCK_MINUTES * 60000).toISOString() : null;
+    await env.DB.prepare('INSERT INTO login_attempts (email, fails, locked_until) VALUES (?, ?, ?) ON CONFLICT (email) DO UPDATE SET fails = excluded.fails, locked_until = excluded.locked_until')
+      .bind(email, lock ? 0 : fails, lock).run();
+    return fail(401, lock ? `Prea multe încercări greșite. Contul e blocat ${LOCK_MINUTES} minute.` : 'Email sau parolă greșită.');
+  }
+
+  const token = randomToken();
+  const expires = new Date(now + SESSION_DAYS * 86400e3).toISOString();
+  await env.DB.batch([
+    env.DB.prepare('DELETE FROM login_attempts WHERE email = ?').bind(email),
+    env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(nowIso()),
+    env.DB.prepare('INSERT INTO sessions (token_hash, email, created_at, expires_at) VALUES (?, ?, ?, ?)').bind(await sha256(token), email, nowIso(), expires),
+  ]);
+  const res = json(user);
+  res.headers.append('Set-Cookie', sessionCookie(token, SESSION_DAYS * 86400));
+  return res;
+}
+
+async function logout(request, env) {
+  const token = cookieOf(request, SESSION_COOKIE);
+  if (token) await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await sha256(token)).run();
+  const res = json({ ok: true });
+  res.headers.append('Set-Cookie', sessionCookie('', 0));
+  return res;
+}
+
 async function authenticate(request, env) {
   // Doar pentru rulare locală (.dev.vars). Nu se setează niciodată în producție.
   if (env.AUTH_MODE === 'none') return { user: { email: 'local@dev', nume: 'Local', rol: 'admin' } };
-  if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) {
-    return { error: fail(503, 'Autentificarea nu este configurată. Setează ACCESS_TEAM_DOMAIN și ACCESS_AUD (vezi README).') };
-  }
-  let id = null;
-  try { id = await verifyAccess(request, env); } catch (e) { return { error: fail(503, 'Nu pot verifica autentificarea Cloudflare Access.') }; }
-  if (!id) return { error: fail(401, 'Neautentificat.') };
-  const user = await account(env, id.email);
-  if (!user) return { error: fail(403, 'Contul ' + id.email + ' nu are acces la această platformă. Cere unui administrator să te adauge.') };
+  const token = cookieOf(request, SESSION_COOKIE);
+  if (!token) return { error: fail(401, 'Neautentificat.') };
+  const s = await env.DB.prepare('SELECT email, expires_at FROM sessions WHERE token_hash = ?').bind(await sha256(token)).first();
+  if (!s || Date.parse(s.expires_at) < Date.now()) return { error: fail(401, 'Sesiunea a expirat. Autentifică-te din nou.') };
+  // Un utilizator dezactivat sau șters pierde accesul imediat, chiar cu sesiune deschisă.
+  const user = await account(env, s.email, true);
+  if (!user) return { error: fail(401, 'Contul nu mai are acces la această platformă.') };
   return { user };
 }
 
@@ -307,6 +339,8 @@ async function api(request, env, url) {
     const origin = request.headers.get('Origin');
     if (!origin || new URL(origin).host !== url.host) return fail(403, 'Origine nepermisă.');
   }
+  if (url.pathname === '/api/auth/login' && method === 'POST') return login(request, env);
+  if (url.pathname === '/api/auth/logout' && method === 'POST') return logout(request, env);
   const auth = await authenticate(request, env);
   if (auth.error) return auth.error;
   const user = auth.user;

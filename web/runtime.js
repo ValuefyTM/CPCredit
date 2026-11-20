@@ -316,24 +316,70 @@ document.addEventListener('click', (e) => {
 });
 window.addEventListener('hashchange', go);
 
+// ---------- Autentificare ----------
+
+function showLogin(message) {
+  const shell = document.getElementById('shell');
+  document.getElementById('nav').hidden = true;
+  root.hidden = true;
+  document.title = 'Autentificare · CP CRM';
+  const wrap = document.createElement('div');
+  wrap.id = 'login';
+  wrap.innerHTML = '<form class="cd" novalidate>'
+    + '<h1 class="hd" style="margin:0;font-size:24px;font-weight:700">CP CRM</h1>'
+    + '<div style="color:#5B6472;margin-top:-6px">Intră cu emailul și parola.</div>'
+    + '<div class="err" role="alert" hidden></div>'
+    + '<label>Email<input name="email" type="email" autocomplete="username" required></label>'
+    + '<label>Parolă<input name="password" type="password" autocomplete="current-password" required></label>'
+    + '<button class="bt" type="submit" style="border:0;background:#0B6B4A;color:#FFFFFF">Intră</button>'
+    + '</form>';
+  shell.appendChild(wrap);
+  const form = wrap.querySelector('form'), err = wrap.querySelector('.err'), btn = wrap.querySelector('button');
+  const say = (t) => { err.textContent = t || ''; err.hidden = !t; };
+  say(message);
+  form.email.focus();
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = form.email.value.trim(), password = form.password.value;
+    if (!email || !password) { say('Completează emailul și parola.'); return; }
+    btn.disabled = true; btn.textContent = 'Se verifică…'; say('');
+    try {
+      await API.send('POST', '/api/auth/login', { email, password });
+      location.reload();
+    } catch (ex) {
+      say((ex.info && ex.info.error) || 'Nu am putut verifica datele. Încearcă din nou.');
+      form.password.value = ''; form.password.focus();
+      btn.disabled = false; btn.textContent = 'Intră';
+    }
+  });
+}
+
+document.getElementById('logout').addEventListener('click', async () => {
+  if (SAVE.pending && !window.confirm('Unele modificări încă se salvează. Ieși oricum?')) return;
+  try { await API.send('POST', '/api/auth/logout', {}); } catch (e) { /* ieșim oricum */ }
+  location.hash = '';
+  location.reload();
+});
+
 (async function boot() {
   try {
-    const [me, state] = await Promise.all([API.get('/api/me'), API.get('/api/state'), DATA.all()]);
+    const me = await API.get('/api/me');
+    const [state] = await Promise.all([API.get('/api/state'), DATA.all()]);
     saved = state || {};
     ME = me;
     const who = document.getElementById('meta-user');
     if (who) who.textContent = me.nume ? me.nume + ' · ' + me.email : me.email;
     const nu = document.getElementById('nav-users');
     if (nu) nu.hidden = me.rol !== 'admin';
+    document.getElementById('logout').hidden = false;
     sidebar();
     saveLabel();
     go();
   } catch (e) {
     console.error(e);
     const info = e.info && e.info.error;
-    if (e.status === 401) showProblem('Nu ești autentificat', 'Sesiunea Cloudflare Access a expirat sau lipsește. Reîncarcă pagina ca să te autentifici din nou.', info);
-    else if (e.status === 403) showProblem('Acces refuzat', 'Contul cu care ești autentificat nu are acces la această platformă.', info);
-    else if (e.status === 503) showProblem('Platforma nu este configurată complet', 'Autentificarea Cloudflare Access nu este încă setată pe acest Worker.', info);
+    if (e.status === 401) showLogin(info && info !== 'Neautentificat.' ? info : '');
+    else if (e.status === 503) showProblem('Platforma nu este configurată complet', 'Autentificarea nu este încă setată pe acest Worker.', info);
     else showProblem('Nu pot încărca datele', 'Serverul nu a răspuns cum trebuie. Reîncarcă pagina peste câteva momente.', info || String(e && e.message));
   }
 })();
