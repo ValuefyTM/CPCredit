@@ -7,6 +7,7 @@
 //
 // Autentificare: Cloudflare Access. Fiecare cerere către /api trebuie să aibă un JWT valid
 // emis de Access; fără ACCESS_TEAM_DOMAIN și ACCESS_AUD configurate, API-ul refuză tot.
+// Autorizare: emailul trebuie să fie un utilizator activ din tabela `users` (ecranul Utilizatori).
 
 const MAX_FILE = 25 * 1024 * 1024;
 const MAX_STATE = 1024 * 1024;
@@ -67,17 +68,36 @@ async function verifyAccess(request, env) {
   return { email: String(payload.email).toLowerCase() };
 }
 
+const emailList = (s) => (s || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+
+// Cine are voie înăuntru: utilizatorii activi din tabela `users`.
+// ADMIN_EMAILS (secret în Cloudflare) sunt administratorii de pornire: la prima intrare
+// sunt adăugați singuri în tabelă, ca să poată adăuga apoi restul echipei din ecranul Utilizatori.
+async function account(env, email) {
+  let u = await env.DB.prepare('SELECT email, nume, rol, activ, last_seen FROM users WHERE email = ?').bind(email).first();
+  if (!u && emailList(env.ADMIN_EMAILS).includes(email)) {
+    await env.DB.prepare("INSERT OR IGNORE INTO users (email, rol, activ, created_at, created_by) VALUES (?, 'admin', 1, ?, 'ADMIN_EMAILS')").bind(email, nowIso()).run();
+    u = await env.DB.prepare('SELECT email, nume, rol, activ, last_seen FROM users WHERE email = ?').bind(email).first();
+  }
+  if (!u || !u.activ) return null;
+  // Ultima intrare, actualizată cel mult o dată pe oră.
+  if (!u.last_seen || Date.now() - Date.parse(u.last_seen) > 3600e3) {
+    await env.DB.prepare('UPDATE users SET last_seen = ? WHERE email = ?').bind(nowIso(), email).run();
+  }
+  return { email: u.email, nume: u.nume || '', rol: u.rol };
+}
+
 async function authenticate(request, env) {
   // Doar pentru rulare locală (.dev.vars). Nu se setează niciodată în producție.
-  if (env.AUTH_MODE === 'none') return { user: { email: 'local@dev' } };
+  if (env.AUTH_MODE === 'none') return { user: { email: 'local@dev', nume: 'Local', rol: 'admin' } };
   if (!env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) {
     return { error: fail(503, 'Autentificarea nu este configurată. Setează ACCESS_TEAM_DOMAIN și ACCESS_AUD (vezi README).') };
   }
-  let user = null;
-  try { user = await verifyAccess(request, env); } catch (e) { return { error: fail(503, 'Nu pot verifica autentificarea Cloudflare Access.') }; }
-  if (!user) return { error: fail(401, 'Neautentificat.') };
-  const allowed = (env.ALLOWED_EMAILS || '').split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
-  if (allowed.length && !allowed.includes(user.email)) return { error: fail(403, 'Contul nu are acces la această platformă.') };
+  let id = null;
+  try { id = await verifyAccess(request, env); } catch (e) { return { error: fail(503, 'Nu pot verifica autentificarea Cloudflare Access.') }; }
+  if (!id) return { error: fail(401, 'Neautentificat.') };
+  const user = await account(env, id.email);
+  if (!user) return { error: fail(403, 'Contul ' + id.email + ' nu are acces la această platformă. Cere unui administrator să te adauge.') };
   return { user };
 }
 
@@ -226,6 +246,58 @@ async function deleteFile(env, id) {
   return json({ ok: true });
 }
 
+// ---------- Utilizatori (doar administratorii) ----------
+
+const EMAIL = /^[^\s@,]+@[^\s@,]+\.[^\s@,]+$/;
+const ROLES = ['admin', 'utilizator'];
+
+async function listUsers(env) {
+  const { results } = await env.DB.prepare('SELECT email, nume, rol, activ, created_at, created_by, last_seen FROM users ORDER BY activ DESC, rol, email').all();
+  return json({ users: results });
+}
+
+async function addUser(request, env, user) {
+  const b = await body(request, 10_000);
+  const email = String(b.email || '').trim().toLowerCase();
+  if (!EMAIL.test(email) || email.length > 200) return fail(400, 'Adresa de email nu este validă.');
+  const rol = ROLES.includes(b.rol) ? b.rol : 'utilizator';
+  const exists = await env.DB.prepare('SELECT email FROM users WHERE email = ?').bind(email).first();
+  if (exists) return fail(409, 'Există deja un utilizator cu adresa ' + email + '.');
+  await env.DB.prepare('INSERT INTO users (email, nume, rol, activ, created_at, created_by) VALUES (?, ?, ?, 1, ?, ?)')
+    .bind(email, text(b.nume, 100), rol, nowIso(), user.email).run();
+  return json({ ok: true });
+}
+
+// Platforma trebuie să rămână cu cel puțin un administrator activ.
+async function otherAdmins(env, email) {
+  const r = await env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE rol = 'admin' AND activ = 1 AND email != ?").bind(email).first();
+  return r.n;
+}
+
+async function updateUser(request, env, user, email) {
+  const u = await env.DB.prepare('SELECT email, nume, rol, activ FROM users WHERE email = ?').bind(email).first();
+  if (!u) return fail(404, 'Utilizator inexistent.');
+  const b = await body(request, 10_000);
+  const nume = b.nume === undefined ? u.nume : text(b.nume, 100);
+  const rol = b.rol === undefined ? u.rol : b.rol;
+  const activ = b.activ === undefined ? u.activ : (b.activ ? 1 : 0);
+  if (!ROLES.includes(rol)) return fail(400, 'Rol necunoscut.');
+  const losesAdmin = u.rol === 'admin' && u.activ && (rol !== 'admin' || !activ);
+  if (losesAdmin && email === user.email) return fail(400, 'Nu îți poți scoate singur drepturile de administrator sau accesul.');
+  if (losesAdmin && !(await otherAdmins(env, email))) return fail(400, 'Platforma trebuie să rămână cu cel puțin un administrator activ.');
+  await env.DB.prepare('UPDATE users SET nume = ?, rol = ?, activ = ? WHERE email = ?').bind(nume, rol, activ, email).run();
+  return json({ ok: true });
+}
+
+async function deleteUser(env, user, email) {
+  if (email === user.email) return fail(400, 'Nu îți poți șterge propriul cont.');
+  const u = await env.DB.prepare('SELECT rol, activ FROM users WHERE email = ?').bind(email).first();
+  if (!u) return fail(404, 'Utilizator inexistent.');
+  if (u.rol === 'admin' && u.activ && !(await otherAdmins(env, email))) return fail(400, 'Platforma trebuie să rămână cu cel puțin un administrator activ.');
+  await env.DB.prepare('DELETE FROM users WHERE email = ?').bind(email).run();
+  return json({ ok: true });
+}
+
 // ---------- Rutare ----------
 
 async function api(request, env, url) {
@@ -241,7 +313,19 @@ async function api(request, env, url) {
   const path = url.pathname;
   let m;
 
-  if (path === '/api/me' && method === 'GET') return json({ email: user.email });
+  if (path === '/api/me' && method === 'GET') return json(user);
+  if (path === '/api/users' || path.startsWith('/api/users/')) {
+    if (user.rol !== 'admin') return fail(403, 'Doar administratorii pot gestiona utilizatorii.');
+    if (path === '/api/users' && method === 'GET') return listUsers(env);
+    if (path === '/api/users' && method === 'POST') return addUser(request, env, user);
+    if ((m = /^\/api\/users\/([^/]+)$/.exec(path))) {
+      let email = '';
+      try { email = decodeURIComponent(m[1]).toLowerCase(); } catch (e) { return fail(400, 'Adresă invalidă.'); }
+      if (method === 'PATCH') return updateUser(request, env, user, email);
+      if (method === 'DELETE') return deleteUser(env, user, email);
+    }
+    return fail(404, 'Rută inexistentă.');
+  }
   if (path === '/api/dosare' && method === 'GET') return getDosare(env);
   if (path === '/api/import/start' && method === 'POST') return importStart(request, env, user);
   if (path === '/api/import/chunk' && method === 'POST') return importChunk(request, env);

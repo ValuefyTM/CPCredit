@@ -57,6 +57,9 @@ const DATA = {
   reset() { this._p = null; },
 };
 
+// Utilizatorul autentificat: { email, nume, rol }.
+let ME = { email: '', nume: '', rol: '' };
+
 // ---------- Salvare ----------
 
 let saved = {};
@@ -261,8 +264,9 @@ function markNav(name) {
 function go() {
   let { name, params } = parseHash();
   if (!__screens[name]) name = 'Main';
+  if (name === 'Utilizatori' && ME.rol !== 'admin') name = 'Main';
   // Fără date nu are ce afișa niciun ecran: trimite la import.
-  if (!DATA.count && name !== 'Import') { name = 'Import'; params = {}; }
+  if (!DATA.count && name !== 'Import' && name !== 'Utilizatori') { name = 'Import'; params = {}; }
   const changed = name !== cur;
   cur = name;
   root.setAttribute('data-s', name);
@@ -316,8 +320,11 @@ window.addEventListener('hashchange', go);
   try {
     const [me, state] = await Promise.all([API.get('/api/me'), API.get('/api/state'), DATA.all()]);
     saved = state || {};
+    ME = me;
     const who = document.getElementById('meta-user');
-    if (who) who.textContent = me.email;
+    if (who) who.textContent = me.nume ? me.nume + ' · ' + me.email : me.email;
+    const nu = document.getElementById('nav-users');
+    if (nu) nu.hidden = me.rol !== 'admin';
     sidebar();
     saveLabel();
     go();

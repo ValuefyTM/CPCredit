@@ -4,13 +4,13 @@ Platformă pentru broker de credite: dosare, clienți, radar de refinanțare, si
 
 Rulează pe Cloudflare: un Worker (API + interfață), o bază de date D1 pentru dosare și ce introduce brokerul, și un bucket R2 separat pentru fișierele încărcate pe dosare.
 
-> **Stadiu:** prima versiune. Testată local cu `wrangler dev`: importul exportului eKIWI, toate ecranele, salvarea după reîncărcare și fișierele pe dosar. Verificarea Cloudflare Access a fost testată doar cu chei generate local. Platforma nu a fost încă instalată în Cloudflare.
+> **Stadiu:** publicată în Cloudflare (Worker `cpcredit`, D1 `cpcredit`, R2 `cpcredit-files`), încă fără Cloudflare Access configurat. Testată local cu `wrangler dev`: importul exportului eKIWI, toate ecranele, salvarea după reîncărcare, fișierele pe dosar și ecranul Utilizatori. Verificarea Cloudflare Access a fost testată doar cu chei generate local.
 
 ## Structură
 
 | Cale | Ce conține |
 |---|---|
-| `src/worker.js` | API-ul de sub `/api/*` și verificarea Cloudflare Access |
+| `src/worker.js` | API-ul de sub `/api/*`, verificarea Cloudflare Access și utilizatorii |
 | `migrations/` | Schema bazei de date D1 |
 | `web/screens/*.html` | Ecranele: șablon + logica fiecăruia |
 | `web/runtime.js` | Motorul interfeței: desenare, navigare, salvare |
@@ -38,12 +38,24 @@ Local, D1 și R2 sunt simulate pe disc, în `.wrangler/`.
 2. **Bucketul de fișiere:** `npx wrangler r2 bucket create cpcredit-files`.
 3. **Schema:** `npm run db:migrate`.
 4. **Publicare:** `npm run deploy`.
-5. **Autentificare:** în Cloudflare Zero Trust, creează o aplicație Access de tip *Self-hosted* pe adresa Worker-ului și o politică ce permite doar adresele de email dorite. Copiază în `wrangler.jsonc`:
+5. **Autentificare:** în Cloudflare Zero Trust, creează o aplicație Access de tip *Self-hosted* pe adresa Worker-ului, cu login prin *One-time PIN* (cod pe email). Politica poate permite orice email (*Everyone*): cine intră efectiv decide platforma, din ecranul **Utilizatori**. Copiază în `wrangler.jsonc`:
    - `ACCESS_TEAM_DOMAIN`: domeniul echipei, de forma `nume.cloudflareaccess.com`;
    - `ACCESS_AUD`: valoarea *Application Audience (AUD)* a aplicației.
 
    Apoi publică din nou. Până când aceste două valori sunt setate, API-ul refuză orice cerere.
-6. **Date:** deschide platforma, mergi la **Import date** și încarcă exportul eKIWI.
+6. **Primul administrator:** `npx wrangler secret put ADMIN_EMAILS`, cu emailul tău (mai multe, separate prin virgulă). La prima intrare devii administrator.
+7. **Date:** deschide platforma, mergi la **Import date** și încarcă exportul eKIWI.
+
+## Utilizatori
+
+Ecranul **Utilizatori** apare doar administratorilor. Acolo se adaugă, se dezactivează sau se șterg conturi, după email.
+
+| Rol | Ce poate |
+|---|---|
+| Administrator | Tot, plus gestionarea utilizatorilor |
+| Utilizator | Toată platforma: dosare, clienți, radar, oferte, rapoarte, import |
+
+Cine se autentifică prin Access dar nu e un utilizator activ primește „Acces refuzat”. Platforma rămâne mereu cu cel puțin un administrator activ, iar un administrator nu își poate scoate singur drepturile.
 
 ## Import
 

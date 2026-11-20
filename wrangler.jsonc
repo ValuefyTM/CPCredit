@@ -21,9 +21,11 @@
   // Cloudflare Access. Fără aceste două valori, API-ul refuză orice cerere.
   "vars": {
     "ACCESS_TEAM_DOMAIN": "",   // de exemplu "firma.cloudflareaccess.com"
-    "ACCESS_AUD": "",           // eticheta „Application Audience (AUD)” a aplicației din Access
-    "ALLOWED_EMAILS": ""        // opțional: adrese permise, separate prin virgulă
+    "ACCESS_AUD": ""            // eticheta „Application Audience (AUD)” a aplicației din Access
   },
+  // Administratorii de pornire nu stau în repo: se setează ca secret,
+  // `npx wrangler secret put ADMIN_EMAILS` (adrese separate prin virgulă).
+  // Restul utilizatorilor se adaugă din ecranul Utilizatori.
 
   "observability": { "enabled": true }
 }
