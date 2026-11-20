@@ -165,7 +165,7 @@
 
 <script>
 class Component extends DCLogic {
-  constructor(p) { super(p); this.state = { d: null, bSel: null, bDone: {}, bDemo: false }; }
+  constructor(p) { super(p); this.state = { d: null, bSel: undefined, bDone: {}, bDemo: false }; }
   bdays(d) {
     const s = this.state;
     const BACK = 5, AHEAD = 14;
@@ -194,6 +194,13 @@ class Component extends DCLogic {
         .map((x, i) => ({ id: 'demo' + i, n: x[1] + ' Exemplu', fn: x[1], t: '', off: x[0], age: x[2], demo: true }));
     }
     src.sort((a, b) => a.off - b.off);
+    // La deschidere e selectată ziua de azi; dacă azi nu e nimeni, prima zi care urmează cu aniversări.
+    // bSel === null înseamnă „toată perioada” (după ce deselectezi o zi).
+    let sel = s.bSel;
+    if (sel === undefined) {
+      const next = src.find((x) => x.off >= 0);
+      sel = src.some((x) => x.off === 0) || !next ? 0 : next.off;
+    }
     const WD = ['dum', 'lun', 'mar', 'mie', 'joi', 'vin', 'sâm'];
     const MO = ['ian', 'feb', 'mar', 'apr', 'mai', 'iun', 'iul', 'aug', 'sep', 'oct', 'noi', 'dec'];
     const dateAt = (o) => new Date(today.getFullYear(), today.getMonth(), today.getDate() + o);
@@ -201,7 +208,7 @@ class Component extends DCLogic {
     for (let o = -BACK; o <= AHEAD; o++) {
       const dt = dateAt(o);
       const cnt = src.filter((x) => x.off === o).length;
-      const on = s.bSel === o;
+      const on = sel === o;
       bDays.push({
         wd: o === 0 ? 'azi' : WD[dt.getDay()], num: dt.getDate(), cnt: cnt || '',
         pressed: on ? 'true' : 'false',
@@ -215,7 +222,7 @@ class Component extends DCLogic {
     const sender = this.props.expeditor ?? 'Cristi Popescu de la Kiwi';
     const NEAR = 3;
     const far = src.filter((x) => x.off > NEAR).length;
-    const shown = s.bSel !== null ? src.filter((x) => x.off === s.bSel) : (s.bAll ? src : src.filter((x) => x.off <= NEAR));
+    const shown = sel !== null ? src.filter((x) => x.off === sel) : (s.bAll ? src : src.filter((x) => x.off <= NEAR));
     const bList = shown.map((x) => {
       const dt = dateAt(x.off);
       const when = x.off === 0 ? 'Azi' : (x.off === -1 ? 'Ieri' : (x.off < 0 ? 'Acum ' + (-x.off) + ' zile' : (x.off === 1 ? 'Mâine' : 'Peste ' + x.off + ' zile')));
@@ -246,12 +253,12 @@ class Component extends DCLogic {
       bNoData: !hasReal,
       bNote: 'Datele de naștere nu sunt încă importate din eKIWI.' + (s.bDemo ? ' Persoanele de mai jos sunt exemple fictive, ca să vezi cum va arăta calendarul.' : ' După import, clienții apar aici automat.'),
       bDemoL: s.bDemo ? 'Ascunde exemplele' : 'Arată exemple',
-      bToggleDemo: () => this.setState({ bDemo: !s.bDemo, bSel: null }),
-      bHasMore: s.bSel === null && far > 0,
+      bToggleDemo: () => this.setState({ bDemo: !s.bDemo, bSel: undefined }),
+      bHasMore: sel === null && far > 0,
       bMoreL: s.bAll ? 'Arată mai puține' : 'Arată și următoarele ' + far,
       bToggleAll: () => this.setState({ bAll: !s.bAll }),
       bEmpty: bList.length === 0,
-      bEmptyText: s.bSel !== null ? 'Nicio zi de naștere în ziua aleasă.' : 'Nicio zi de naștere în această perioadă.'
+      bEmptyText: sel !== null ? 'Nicio zi de naștere în ziua aleasă.' : 'Nicio zi de naștere în această perioadă.'
     };
   }
   componentDidMount() {
