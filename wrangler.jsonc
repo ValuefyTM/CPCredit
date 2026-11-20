@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cpcredit",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+
+  // Interfața: fișierele generate de `npm run build` în ./public
+  "build": { "command": "node scripts/build.mjs" },
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+
+  // Baza de date D1. După `npx wrangler d1 create cpcredit`, pune aici database_id primit.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "cpcredit", "database_id": "PUNE-AICI-ID-UL-D1", "migrations_dir": "migrations" }
+  ],
+
+  // Bucketul R2 separat pentru fișierele încărcate pe dosare.
+  "r2_buckets": [
+    { "binding": "FILES", "bucket_name": "cpcredit-files" }
+  ],
+
+  // Cloudflare Access. Fără aceste două valori, API-ul refuză orice cerere.
+  "vars": {
+    "ACCESS_TEAM_DOMAIN": "",   // de exemplu "firma.cloudflareaccess.com"
+    "ACCESS_AUD": "",           // eticheta „Application Audience (AUD)” a aplicației din Access
+    "ALLOWED_EMAILS": ""        // opțional: adrese permise, separate prin virgulă
+  },
+
+  "observability": { "enabled": true }
+}

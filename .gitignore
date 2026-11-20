@@ -1,0 +1,10 @@
+node_modules/
+public/
+.wrangler/
+.dev.vars
+
+# Datele clienților nu intră niciodată în repo.
+*.xlsx
+*.xls
+*.csv
+data/

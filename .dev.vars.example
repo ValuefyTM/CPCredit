@@ -1,0 +1,3 @@
+# Copiază în .dev.vars pentru rulare locală (`npm run dev`).
+# AUTH_MODE=none oprește verificarea Cloudflare Access. Doar local, niciodată în producție.
+AUTH_MODE=none

@@ -1,0 +1,224 @@
+<!-- title: Import date -->
+<style>
+.th{padding:8px 12px;font-weight:600;font-size:12px;color:#5B6472;text-align:left;white-space:nowrap}
+.td{padding:8px 12px;border-top:1px solid #EEF0F3}
+</style>
+
+<template>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px">
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Import date</h1>
+<div style="color: #5B6472">Încarci exportul Excel din eKIWI, iar platforma își actualizează dosarele din el.</div>
+</header>
+
+<section aria-label="Date existente" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="3">
+<div class="cd" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 600; color: #5B6472">{{t.l}}</span>
+<span class="hd" style="font-size: 24px; font-weight: 700; overflow-wrap: anywhere">{{t.v}}</span>
+</div>
+</sc-for>
+</section>
+
+<section class="cd" aria-labelledby="i-up" style="padding: 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="i-up" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Încarcă exportul eKIWI</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<label class="bt fx" for="i-file" style="border: 0; background: #0B0F1A; color: #FFFFFF">Alege fișierul .xlsx</label>
+<input id="i-file" type="file" accept=".xlsx" onChange="{{onFile}}" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+<span style="color: #5B6472; overflow-wrap: anywhere">{{fileLabel}}</span>
+</div>
+
+<sc-if value="{{err}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="border-radius: 12px; background: #FFF1E8; color: #7C2D12; padding: 12px 14px; line-height: 1.5">{{err}}</div>
+</sc-if>
+
+<sc-if value="{{hasParsed}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px">
+<sc-for list="{{summary}}" as="k" hint-placeholder-count="4">
+<div style="background: #F2F4F7; border-radius: 14px; padding: 12px 14px">
+<div style="font-size: 12px; color: #5B6472">{{k.l}}</div>
+<div class="hd" style="font-size: 20px; font-weight: 700">{{k.v}}</div>
+</div>
+</sc-for>
+</div>
+<sc-for list="{{notes}}" as="n" hint-placeholder-count="0">
+<div style="border-radius: 12px; background: #FDF6E3; color: #5F3B06; padding: 10px 14px; font-size: 13px; line-height: 1.5">{{n}}</div>
+</sc-for>
+<div style="font-size: 13px; color: #3D4653; line-height: 1.5">Importul înlocuiește lista de dosare: cele care nu mai apar în fișier se șterg din platformă. Notițele, stadiile, ipotezele și fișierele încărcate rămân neschimbate.</div>
+<sc-if value="{{needConfirm}}" hint-placeholder-val="{{ false }}">
+<label style="display: flex; align-items: flex-start; gap: 10px; border-radius: 12px; background: #FFF1E8; color: #7C2D12; padding: 12px 14px; line-height: 1.5">
+<input type="checkbox" checked="{{confirmed}}" onChange="{{onConfirm}}" style="width: 18px; height: 18px; margin-top: 2px">
+<span>{{confirmText}}</span>
+</label>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<button class="bt fx" onClick="{{run}}" disabled="{{runDisabled}}" style="{{runStyle}}">{{runLabel}}</button>
+<sc-if value="{{busy}}" hint-placeholder-val="{{ false }}">
+<div role="progressbar" aria-label="Progres import" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}" style="flex: 1 1 200px; height: 10px; border-radius: 999px; background: #EEF0F3; overflow: hidden"><div style="{{bar}}"></div></div>
+</sc-if>
+</div>
+</sc-if>
+</section>
+
+<section class="cd" aria-labelledby="i-cols" style="padding: 6px 0 10px">
+<h2 id="i-cols" class="hd" style="margin: 0; padding: 14px 20px 8px; font-size: 18px; font-weight: 700">Coloanele citite din fișier</h2>
+<div style="padding: 0 20px 8px; font-size: 13px; color: #5B6472; line-height: 1.5">Platforma caută foaia „eKIWI” și citește coloanele după numele din primul rând. Ordinea coloanelor nu contează.</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 520px">
+<thead><tr>
+<th scope="col" class="th" style="padding-left: 20px">Coloană în Excel</th>
+<th scope="col" class="th">Ce reprezintă</th>
+<th scope="col" class="th">Necesară</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="20">
+<tr>
+<th scope="row" class="td" style="padding-left: 20px; text-align: left; font-weight: 600; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px">{{c.x}}</th>
+<td class="td">{{c.l}}</td>
+<td class="td">{{c.req}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</template>
+
+<script>
+// Coloana din Excel -> câmpul trimis la server.
+const COLUMNS = [
+  ['ID_DOSAR', 'id', 'Numărul dosarului', true],
+  ['ID_CLIENT', 'client_id', 'Identificatorul clientului', true],
+  ['NUME_CLIENT', 'nume', 'Numele clientului', true],
+  ['DATA_DEP', 'data_dep', 'Data depunerii', true],
+  ['STATUS_FINAL', 'status', 'Statusul dosarului', true],
+  ['BANCA', 'banca', 'Banca', false],
+  ['TIP_CREDIT', 'tip_credit', 'Tipul creditului', false],
+  ['DESTINATIE_CREDIT', 'destinatie', 'Destinația creditului', false],
+  ['TIP_FINANTARE', 'tip_finantare', 'Credit nou sau refinanțare', false],
+  ['TIP_DOBANDA', 'tip_dobanda', 'Fixă, mixtă sau variabilă', false],
+  ['ANI_FIXA', 'ani_fixa', 'Anii de dobândă fixă', false],
+  ['PRODUS', 'produs', 'Produsul băncii', false],
+  ['RATA_DOBANDA', 'rata_dobanda', 'Dobânda la acordare', false],
+  ['SUMA_DEPUSA_RON', 'suma_depusa', 'Suma solicitată, în lei', false],
+  ['VALUTA', 'valuta', 'Valuta creditului', false],
+  ['SUMA_TRASA_RON', 'suma_trasa', 'Suma trasă, în lei', false],
+  ['DATA_TRAS', 'data_tras', 'Data tragerii', false],
+  ['email1', 'email', 'Emailul clientului', false],
+  ['Telefon1', 'telefon', 'Telefonul clientului', false],
+  ['DATA_NASTERE', 'data_nastere', 'Data nașterii, pentru calendarul de aniversări', false]
+];
+const DATES = ['data_dep', 'data_tras', 'data_nastere'];
+const NUMBERS = ['id', 'client_id', 'ani_fixa', 'rata_dobanda', 'suma_depusa', 'suma_trasa'];
+
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { fileName: '', parsed: null, err: '', busy: false, done: 0, confirmed: false }; }
+  fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
+  async parse(file) {
+    this.setState({ fileName: file.name, parsed: null, err: '', confirmed: false });
+    try {
+      const sheets = await XLSXLITE.read(await file.arrayBuffer());
+      const names = Object.keys(sheets);
+      const norm = (v) => String(v === null || v === undefined ? '' : v).trim().toLowerCase();
+      const hasIds = (rows) => rows.length && rows[0].some((h) => norm(h) === 'id_dosar') && rows[0].some((h) => norm(h) === 'id_client');
+      const sheet = names.find((n) => norm(n) === 'ekiwi' && hasIds(sheets[n])) || names.find((n) => hasIds(sheets[n]));
+      if (!sheet) throw new Error('Nu am găsit în fișier o foaie cu coloanele ID_DOSAR și ID_CLIENT. Foile găsite: ' + names.join(', ') + '.');
+      const rows = sheets[sheet];
+      const head = rows[0].map(norm);
+      const at = {};
+      COLUMNS.forEach((c) => { at[c[1]] = head.indexOf(c[0].toLowerCase()); });
+      const missingReq = COLUMNS.filter((c) => c[3] && at[c[1]] < 0).map((c) => c[0]);
+      if (missingReq.length) throw new Error('Din foaia „' + sheet + '” lipsesc coloane necesare: ' + missingReq.join(', ') + '.');
+      const missingOpt = COLUMNS.filter((c) => !c[3] && at[c[1]] < 0).map((c) => c[0]);
+      const byId = new Map();
+      let skipped = 0, dupes = 0, badDate = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || !r.some((v) => v !== null && v !== '')) continue;
+        const o = {};
+        COLUMNS.forEach((c) => {
+          const v = at[c[1]] < 0 ? null : r[at[c[1]]];
+          if (DATES.includes(c[1])) o[c[1]] = XLSXLITE.toIsoDate(v);
+          else if (NUMBERS.includes(c[1])) o[c[1]] = v === null || v === '' || !isFinite(Number(v)) ? 0 : Number(v);
+          else o[c[1]] = v === null || v === undefined ? null : String(v).trim();
+        });
+        if (!o.id || !o.client_id || !o.nume) { skipped++; continue; }
+        if (!o.data_dep) badDate++;
+        if (byId.has(o.id)) dupes++;
+        byId.set(o.id, o);
+      }
+      const list = Array.from(byId.values());
+      if (!list.length) throw new Error('Foaia „' + sheet + '” nu conține niciun dosar valid.');
+      const dates = list.map((o) => o.data_dep).filter(Boolean).sort();
+      this.setState({ parsed: { sheet, list, skipped, dupes, badDate, missingOpt, clients: new Set(list.map((o) => o.client_id)).size, drawn: list.filter((o) => o.suma_trasa > 0).length, from: dates[0] || '', to: dates[dates.length - 1] || '' } });
+    } catch (e) {
+      this.setState({ err: e && e.message ? e.message : 'Nu am putut citi fișierul.' });
+    }
+  }
+  async run() {
+    const p = this.state.parsed;
+    if (!p || this.state.busy) return;
+    this.setState({ busy: true, done: 0, err: '' });
+    try {
+      const { importId } = await API.send('POST', '/api/import/start', { fileName: this.state.fileName, total: p.list.length });
+      const SIZE = 200;
+      for (let i = 0; i < p.list.length; i += SIZE) {
+        await API.send('POST', '/api/import/chunk', { importId, rows: p.list.slice(i, i + SIZE) });
+        this.setState({ done: Math.min(p.list.length, i + SIZE) });
+      }
+      await API.send('POST', '/api/import/finish', { importId });
+      await APP.reload('Main');
+    } catch (e) {
+      const info = e && e.info && e.info.error;
+      this.setState({ busy: false, err: 'Importul s-a oprit înainte de final' + (info ? ': ' + info : '.') + ' Dosarele vechi nu au fost șterse. Încearcă din nou.' });
+    }
+  }
+  renderVals() {
+    const s = this.state;
+    const p = s.parsed;
+    const m = DATA.meta || {};
+    const ro = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '—');
+    const notes = [];
+    if (p) {
+      if (p.skipped) notes.push(this.fmt(p.skipped) + ' rânduri fără ID_DOSAR, ID_CLIENT sau NUME_CLIENT vor fi sărite.');
+      if (p.dupes) notes.push(this.fmt(p.dupes) + ' dosare apar de mai multe ori în fișier; păstrez ultima apariție.');
+      if (p.badDate) notes.push(this.fmt(p.badDate) + ' dosare nu au o dată de depunere pe care să o pot citi.');
+      if (p.missingOpt.length) notes.push('Coloane opționale care lipsesc din fișier: ' + p.missingOpt.join(', ') + '.');
+    }
+    const drop = p && m.count ? m.count - p.list.length : 0;
+    const needConfirm = !!p && m.count > 0 && p.list.length < m.count * 0.8;
+    const disabled = !p || s.busy || (needConfirm && !s.confirmed);
+    const pct = p && p.list.length ? Math.round(s.done / p.list.length * 100) : 0;
+    return {
+      tiles: [
+        { l: 'Dosare în platformă', v: this.fmt(m.count || 0) },
+        { l: 'Ultimul import', v: m.importedAt ? new Date(m.importedAt).toLocaleDateString('ro-RO') : 'niciunul' },
+        { l: 'Fișier importat', v: m.fileName || '—' }
+      ],
+      fileLabel: s.fileName || 'Niciun fișier ales',
+      onFile: (e) => { const f = e.target.files && e.target.files[0]; if (f && !this.state.busy) this.parse(f); },
+      err: s.err,
+      hasParsed: !!p,
+      summary: p ? [
+        { l: 'Foaie citită', v: p.sheet },
+        { l: 'Dosare', v: this.fmt(p.list.length) },
+        { l: 'Clienți', v: this.fmt(p.clients) },
+        { l: 'Credite trase', v: this.fmt(p.drawn) },
+        { l: 'Perioadă', v: ro(p.from) + ' – ' + ro(p.to) }
+      ] : [],
+      notes,
+      needConfirm, confirmed: s.confirmed,
+      onConfirm: () => this.setState({ confirmed: !s.confirmed }),
+      confirmText: p ? 'Fișierul are ' + this.fmt(p.list.length) + ' dosare, cu ' + this.fmt(drop) + ' mai puține decât cele ' + this.fmt(m.count || 0) + ' din platformă. Confirm că vreau să le șterg pe cele care lipsesc.' : '',
+      run: () => this.run(),
+      runDisabled: disabled,
+      runStyle: 'border:0;' + (disabled ? 'background:#D3D8E0;color:#5B6472;cursor:not-allowed' : 'background:#0B6B4A;color:#FFFFFF'),
+      runLabel: s.busy ? 'Se importă… ' + this.fmt(s.done) + ' din ' + this.fmt(p ? p.list.length : 0) : (p ? 'Importă ' + this.fmt(p.list.length) + ' dosare' : 'Importă'),
+      busy: s.busy, pct,
+      bar: 'height:100%;border-radius:999px;background:#0B6B4A;width:' + pct + '%',
+      cols: COLUMNS.map((c) => ({ x: c[0], l: c[2], req: c[3] ? 'da' : 'opțional' }))
+    };
+  }
+}
+</script>

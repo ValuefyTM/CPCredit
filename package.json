@@ -1,0 +1,17 @@
+{
+  "name": "cpcredit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CP CRM: platformă pentru broker de credite (dosare, clienți, radar de refinanțare)",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply cpcredit --remote",
+    "db:migrate:local": "wrangler d1 migrations apply cpcredit --local"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

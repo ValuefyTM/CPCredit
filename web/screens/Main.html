@@ -1,0 +1,310 @@
+<!-- title: Acasă -->
+<style>
+
+</style>
+
+<template>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 20px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Acasă</h1>
+<div style="color: #5B6472">Ce ai de făcut azi și cum arată portofoliul. Date eKIWI la {{asOf}}.</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px">
+<a class="bt fx" href="#Clienti" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">Caută client</a>
+<a class="bt fx" href="#Dosare" style="background: #0B0F1A; color: #FFFFFF">Vezi dosarele în lucru</a>
+</div>
+</header>
+
+<section aria-label="Indicatori" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px">
+<div class="cd" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 600; color: #5B6472">Dosare în lucru</span>
+<span class="hd" style="font-size: 40px; font-weight: 700; line-height: 1.1">{{k.open}}</span>
+<span style="font-size: 13px; color: #3D4653">{{k.openSub}}</span>
+</div>
+<div class="cd" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 600; color: #5B6472">Volum tras în {{yr}}</span>
+<span class="hd" style="font-size: 40px; font-weight: 700; line-height: 1.1">{{k.vol}}</span>
+<span style="font-size: 13px; color: #3D4653"><strong style="{{k.volDeltaStyle}}">{{k.volDelta}}</strong> față de aceeași perioadă din {{yrPrev}}</span>
+</div>
+<div class="cd" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 600; color: #5B6472">Rată de reușită în {{yr}}</span>
+<span class="hd" style="font-size: 40px; font-weight: 700; line-height: 1.1">{{k.conv}}</span>
+<span style="font-size: 13px; color: #3D4653">{{k.convSub}}</span>
+</div>
+<a class="fx" href="#Radar" style="text-decoration: none; color: #0B0F1A; background: #D8C07A; border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 13px; font-weight: 600">Radar refinanțare</span>
+<span class="hd" style="font-size: 40px; font-weight: 700; line-height: 1.1">{{k.radar}}</span>
+<span style="font-size: 13px">clienți ies din dobânda fixă în 90 de zile</span>
+<span style="font-size: 13px; font-weight: 700; margin-top: 4px">Deschide radarul →</span>
+</a>
+</section>
+
+<section class="cd" aria-labelledby="h-bd" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="h-bd" class="hd" style="margin: 0; font-size: 16px; font-weight: 700">Zile de naștere</h2>
+<span style="font-size: 12px; color: #5B6472">{{bSummary}}</span>
+</div>
+<sc-if value="{{bNoData}}" hint-placeholder-val="{{ false }}">
+<div role="note" style="display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; border-radius: 10px; background: #FDF6E3; color: #5F3B06; padding: 4px 4px 4px 12px; font-size: 12px; line-height: 1.4">
+<span style="flex: 1 1 320px">{{bNote}}</span>
+<button class="bt fx" onClick="{{bToggleDemo}}" style="min-height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid #C9A548; background: #FFFFFF; color: #10151C; font-size: 12px">{{bDemoL}}</button>
+</div>
+</sc-if>
+<div style="overflow-x: auto; padding-bottom: 4px">
+<div role="group" aria-label="Alege o zi" style="display: flex; gap: 6px; min-width: 1040px">
+<sc-for list="{{bDays}}" as="dy" hint-placeholder-count="20">
+<button class="fx" onClick="{{dy.pick}}" aria-pressed="{{dy.pressed}}" aria-label="{{dy.aria}}" style="{{dy.style}}">
+<span style="font-size: 10px; font-weight: 600; line-height: 1.2">{{dy.wd}}</span>
+<span style="display: inline-flex; align-items: center; gap: 3px"><span class="hd" style="font-size: 15px; font-weight: 700; line-height: 1.15">{{dy.num}}</span><span style="{{dy.badge}}">{{dy.cnt}}</span></span>
+</button>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 6px">
+<sc-for list="{{bList}}" as="b" hint-placeholder-count="4">
+<div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: #F2F4F7; min-width: 0">
+<span class="hd" aria-hidden="true" style="{{b.av}}">{{b.ini}}</span>
+<div style="flex: 1 1 0; min-width: 0; line-height: 1.25">
+<div style="{{b.nameStyle}}">{{b.n}}</div>
+<div style="font-size: 11px; color: #5B6472; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{b.sub}}</div>
+</div>
+<span style="{{b.pill}}">{{b.when}}</span>
+<sc-if value="{{b.canSend}}" hint-placeholder-val="{{ true }}">
+<a class="bt fx" href="{{b.wa}}" target="_blank" rel="noopener" style="flex: 0 0 auto; min-height: 32px; padding: 0 10px; border-radius: 8px; background: #0B6B4A; color: #FFFFFF; font-size: 12px">Felicită</a>
+<button class="fx" onClick="{{b.toggle}}" aria-pressed="{{b.pressed}}" aria-label="{{b.doneAria}}" style="{{b.doneStyle}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{bEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 4px; font-size: 12px; color: #5B6472">{{bEmptyText}}</div>
+</sc-if>
+<sc-if value="{{bHasMore}}" hint-placeholder-val="{{ false }}">
+<div><button class="bt fx" onClick="{{bToggleAll}}" style="min-height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C; font-size: 12px">{{bMoreL}}</button></div>
+</sc-if>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px">
+<section class="cd" aria-labelledby="h-vol" style="flex: 2 1 520px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="h-vol" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Volum tras pe luni</h2>
+<span style="font-size: 12px; color: #5B6472">mil. lei · ultimele 12 luni · noiembrie e în curs</span>
+</div>
+<div role="img" aria-label="Volum tras lunar în ultimele 12 luni" style="display: flex; align-items: flex-end; gap: 10px; height: 230px">
+<sc-for list="{{months}}" as="m" hint-placeholder-count="12">
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%">
+<span style="font-size: 11px; font-weight: 600; color: #3D4653; font-variant-numeric: tabular-nums">{{m.v}}</span>
+<div style="{{m.bar}}"></div>
+<span style="font-size: 12px; color: #5B6472">{{m.l}}</span>
+<span style="font-size: 11px; color: #5B6472">{{m.n}}</span>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5B6472">Sub fiecare lună: numărul de credite trase.</div>
+</section>
+
+<section class="cd" aria-labelledby="h-call" style="flex: 1 1 340px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="h-call" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">De sunat săptămâna aceasta</h2>
+<a href="#Radar" style="font-size: 13px; font-weight: 600">Toți</a>
+</div>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{calls}}" as="c" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #EEF0F3">
+<span style="flex: 0 0 auto; min-width: 54px; text-align: center; padding: 6px 8px; border-radius: 10px; background: #FFF1E8; color: #9A3412; font-size: 12px; font-weight: 700">{{c.z}}</span>
+<div style="flex: 1 1 auto; min-width: 0">
+<div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.n}}</div>
+<div style="font-size: 12px; color: #5B6472">{{c.sub}}</div>
+</div>
+<a class="fx" href="{{c.tel}}" aria-label="{{c.aria}}" style="flex: 0 0 auto; width: 44px; height: 44px; border-radius: 12px; border: 1px solid #D3D8E0; display: inline-flex; align-items: center; justify-content: center; color: #10151C">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
+</a>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px">
+<section class="cd" aria-labelledby="h-pipe" style="flex: 1 1 400px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="h-pipe" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Dosare în lucru pe etape</h2>
+<a href="#Dosare" style="font-size: 13px; font-weight: 600">Pipeline</a>
+</div>
+<sc-for list="{{stages}}" as="s" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 12px">
+<span style="font-weight: 600">{{s.l}}</span>
+<span style="color: #3D4653; font-variant-numeric: tabular-nums"><strong>{{s.n}}</strong> dosare · {{s.sum}} lei</span>
+</div>
+<div style="height: 10px; border-radius: 999px; background: #EEF0F3; overflow: hidden"><div style="{{s.bar}}"></div></div>
+</div>
+</sc-for>
+<div style="border-radius: 12px; background: #FFF1E8; color: #7C2D12; padding: 12px 14px; font-size: 13px; line-height: 1.45">{{stale}}</div>
+</section>
+
+<section class="cd" aria-labelledby="h-bank" style="flex: 1 1 400px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="h-bank" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Bănci în {{yr}}</h2>
+<a href="#Rapoarte" style="font-size: 13px; font-weight: 600">Rapoarte</a>
+</div>
+<sc-for list="{{banks}}" as="b" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 12px">
+<span style="font-weight: 600">{{b.l}}</span>
+<span style="color: #3D4653; font-variant-numeric: tabular-nums"><strong>{{b.sum}}</strong> lei · {{b.n}} trase · reușită {{b.conv}}</span>
+</div>
+<div style="height: 10px; border-radius: 999px; background: #EEF0F3; overflow: hidden"><div style="{{b.bar}}"></div></div>
+</div>
+</sc-for>
+</section>
+</div>
+</main>
+</template>
+
+<script>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { d: null, bSel: null, bDone: {}, bDemo: false }; }
+  bdays(d) {
+    const s = this.state;
+    const BACK = 5, AHEAD = 14;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const off = (dt) => Math.round((dt - today) / 86400000);
+    const real = (d && d.birthdays) || [];
+    const hasReal = real.length > 0;
+    let src = [];
+    if (hasReal) {
+      real.forEach((c, i) => {
+        const p = String(c.bd || '').split('.');
+        const day = +p[0], mon = +p[1], yr = +p[2] || 0;
+        if (!day || !mon) return;
+        for (let y = today.getFullYear() - 1; y <= today.getFullYear() + 1; y++) {
+          const o = off(new Date(y, mon - 1, day));
+          if (o >= -BACK && o <= AHEAD) {
+            const parts = c.n.split(' ');
+            src.push({ id: 'c' + (c.cid || i) + '-' + y, n: c.n, fn: parts.length > 1 ? parts[1].split('-')[0] : parts[0], t: c.t || '', off: o, age: yr ? y - yr : 0, demo: false });
+            break;
+          }
+        }
+      });
+    } else if (s.bDemo) {
+      src = [[-4, 'Maria', 38], [-2, 'Andrei', 45], [-1, 'Ioana', 31], [0, 'Mihai', 40], [0, 'Elena', 52], [1, 'Radu', 36], [3, 'Cristina', 29], [6, 'Vlad', 47], [9, 'Alina', 34], [12, 'George', 60]]
+        .map((x, i) => ({ id: 'demo' + i, n: x[1] + ' Exemplu', fn: x[1], t: '', off: x[0], age: x[2], demo: true }));
+    }
+    src.sort((a, b) => a.off - b.off);
+    const WD = ['dum', 'lun', 'mar', 'mie', 'joi', 'vin', 'sâm'];
+    const MO = ['ian', 'feb', 'mar', 'apr', 'mai', 'iun', 'iul', 'aug', 'sep', 'oct', 'noi', 'dec'];
+    const dateAt = (o) => new Date(today.getFullYear(), today.getMonth(), today.getDate() + o);
+    const bDays = [];
+    for (let o = -BACK; o <= AHEAD; o++) {
+      const dt = dateAt(o);
+      const cnt = src.filter((x) => x.off === o).length;
+      const on = s.bSel === o;
+      bDays.push({
+        wd: o === 0 ? 'azi' : WD[dt.getDay()], num: dt.getDate(), cnt: cnt || '',
+        pressed: on ? 'true' : 'false',
+        aria: dt.getDate() + ' ' + MO[dt.getMonth()] + ', ' + cnt + (cnt === 1 ? ' zi de naștere' : ' zile de naștere'),
+        badge: 'display:inline-flex;align-items:center;justify-content:center;min-width:15px;height:15px;border-radius:999px;font-size:10px;font-weight:700;' + (cnt ? (o < 0 ? 'background:#FF8A4C;color:#0B0F1A' : (on ? 'background:#FFFFFF;color:#0B0F1A' : 'background:#0B0F1A;color:#FFFFFF')) : 'display:none'),
+        style: 'all:unset;position:relative;box-sizing:border-box;cursor:pointer;flex:1 0 44px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;' +
+          (on ? 'background:#0B0F1A;color:#FFFFFF;border:2px solid #0B0F1A' : (o === 0 ? 'background:#D8C07A;color:#0B0F1A;border:2px solid #0B0F1A' : (o < 0 ? 'background:#F2F4F7;color:#5B6472;border:2px solid #F2F4F7' : 'background:#FFFFFF;color:#10151C;border:2px solid #E4E7EC'))),
+        pick: () => this.setState({ bSel: on ? null : o })
+      });
+    }
+    const sender = this.props.expeditor ?? 'Cristi Popescu de la Kiwi';
+    const NEAR = 3;
+    const far = src.filter((x) => x.off > NEAR).length;
+    const shown = s.bSel !== null ? src.filter((x) => x.off === s.bSel) : (s.bAll ? src : src.filter((x) => x.off <= NEAR));
+    const bList = shown.map((x) => {
+      const dt = dateAt(x.off);
+      const when = x.off === 0 ? 'Azi' : (x.off === -1 ? 'Ieri' : (x.off < 0 ? 'Acum ' + (-x.off) + ' zile' : (x.off === 1 ? 'Mâine' : 'Peste ' + x.off + ' zile')));
+      const msg = x.off < 0
+        ? 'La mulți ani, ' + x.fn + ', chiar dacă cu puțină întârziere! Multă sănătate și numai bine. ' + sender
+        : 'La mulți ani, ' + x.fn + '! Multă sănătate, bucurii și tot ce îți dorești. ' + sender;
+      const digits = x.t.replace(/\D/g, '');
+      const done = !!s.bDone[x.id];
+      return {
+        n: x.n + (x.demo ? ' · exemplu' : ''), ini: x.fn.charAt(0).toUpperCase(),
+        sub: dt.getDate() + ' ' + MO[dt.getMonth()] + (x.age ? ' · ' + x.age + ' de ani' : ''),
+        when,
+        nameStyle: 'font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' + (done ? 'color:#5B6472' : ''),
+        av: 'flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;' + (x.off === 0 ? 'background:#D8C07A;color:#0B0F1A' : 'background:#0B0F1A;color:#FFFFFF'),
+        pill: 'flex:0 0 auto;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;' + (x.off === 0 ? 'background:#D8C07A;color:#0B0F1A' : (x.off < 0 ? 'background:#FFF1E8;color:#9A3412' : 'background:#FFFFFF;color:#3D4653')),
+        canSend: x.off <= 0,
+        wa: 'https://wa.me/' + (digits.length >= 9 ? (digits.charAt(0) === '0' ? '40' + digits.slice(1) : digits) : '') + '?text=' + encodeURIComponent(msg),
+        pressed: done ? 'true' : 'false', doneAria: done ? 'Felicitat, apasă pentru a anula' : 'Marchează ca felicitat',
+        doneStyle: 'all:unset;box-sizing:border-box;cursor:pointer;flex:0 0 auto;width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;' + (done ? 'background:#0B6B4A;color:#FFFFFF;border:1px solid #0B6B4A' : 'background:#FFFFFF;color:#8A93A1;border:1px solid #D3D8E0'),
+        toggle: () => this.setState({ bDone: { ...this.state.bDone, [x.id]: !done } })
+      };
+    });
+    const nToday = src.filter((x) => x.off === 0).length;
+    const nLate = src.filter((x) => x.off < 0 && !s.bDone[x.id]).length;
+    return {
+      bDays, bList,
+      bSummary: 'ultimele ' + BACK + ' zile și următoarele ' + AHEAD + (src.length ? ' · ' + nToday + ' azi · ' + nLate + ' de recuperat' : ''),
+      bNoData: !hasReal,
+      bNote: 'Datele de naștere nu sunt încă importate din eKIWI.' + (s.bDemo ? ' Persoanele de mai jos sunt exemple fictive, ca să vezi cum va arăta calendarul.' : ' După import, clienții apar aici automat.'),
+      bDemoL: s.bDemo ? 'Ascunde exemplele' : 'Arată exemple',
+      bToggleDemo: () => this.setState({ bDemo: !s.bDemo, bSel: null }),
+      bHasMore: s.bSel === null && far > 0,
+      bMoreL: s.bAll ? 'Arată mai puține' : 'Arată și următoarele ' + far,
+      bToggleAll: () => this.setState({ bAll: !s.bAll }),
+      bEmpty: bList.length === 0,
+      bEmptyText: s.bSel !== null ? 'Nicio zi de naștere în ziua aleasă.' : 'Nicio zi de naștere în această perioadă.'
+    };
+  }
+  componentDidMount() {
+    DATA.load('core').then((d) => this.setState({ d })).catch(() => {});
+  }
+  fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
+  mil(n) { return (n / 1e6).toLocaleString('ro-RO', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+  bk(b) {
+    const M = { 'UNICREDIT BANK': 'UniCredit', 'OTP BANK ROMANIA': 'OTP Bank', 'ALPHA BANK': 'Alpha Bank', 'GARANTI BANK': 'Garanti BBVA', 'SALT BANK': 'Salt Bank', 'INTESA SANPAOLO': 'Intesa Sanpaolo', 'RAIFFEISEN BANK': 'Raiffeisen', 'ING BANK': 'ING', 'BANCA TRANSILVANIA': 'Banca Transilvania', 'LIBRA INTERNET BANK': 'Libra Bank' };
+    return M[b] || b;
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#D8C07A';
+    const d = this.state.d;
+    const B = this.bdays(d);
+    if (!d) return { ...B, asOf: '…', yr: '', yrPrev: '', k: { open: '—', openSub: 'Se încarcă…', vol: '—', volDelta: '', volDeltaStyle: '', conv: '—', convSub: '', radar: '—' }, months: [], calls: [], stages: [], banks: [], stale: 'Se încarcă…' };
+    const P = d.pipeline;
+    const cnt = (st) => P.filter((x) => x.st === st);
+    const delta = d.ytd.sumPrev ? (d.ytd.sum / d.ytd.sumPrev - 1) * 100 : 0;
+    const pc = (v) => (v === null || v === undefined ? '—' : v.toLocaleString('ro-RO') + '%');
+    const k = {
+      open: P.length,
+      openSub: cnt('nou').length + ' noi · ' + cnt('analiza').length + ' în analiză · ' + cnt('aprobat').length + ' aprobate · ' + cnt('tras').length + ' trase',
+      vol: this.mil(d.ytd.sum) + ' mil.',
+      volDelta: (delta > 0 ? '+' : '') + delta.toLocaleString('ro-RO', { maximumFractionDigits: 1 }) + '%',
+      volDeltaStyle: 'color:' + (delta >= 0 ? '#0B6B4A' : '#9A3412'),
+      conv: pc(d.ytd.conv),
+      convSub: pc(d.ytd.convPrev) + ' în ' + (d.year - 1) + ' · din dosarele închise',
+      radar: d.radar.urgent.n
+    };
+    const mx = Math.max.apply(null, d.months.map((m) => m.sum)) || 1;
+    const months = d.months.map((m, i) => ({
+      l: m.l, v: this.mil(m.sum), n: m.trase,
+      bar: 'width:100%;max-width:46px;border-radius:9px 9px 4px 4px;height:' + Math.max(4, Math.round(m.sum / mx * 150)) + 'px;' +
+        (i === d.months.length - 1 ? 'background:' + accent + ';border:1px solid #0B0F1A;box-sizing:border-box' : 'background:#0B0F1A')
+    }));
+    const calls = d.radarTop.slice(0, 6).map((r) => ({
+      n: r.n, z: r.z + ' zile',
+      sub: this.bk(r.b) + ' · ' + this.fmt(r.s) + ' lei · fixa expiră ' + r.ex,
+      tel: r.t ? 'tel:' + r.t.replace(/\s/g, '') : '#Radar',
+      aria: 'Sună ' + r.n
+    }));
+    const ST = [['nou', 'Nou'], ['analiza', 'Analiză bancă'], ['aprobat', 'Aprobat'], ['tras', 'Tras, de reconciliat']];
+    const stages = ST.map((s) => {
+      const list = cnt(s[0]);
+      return { l: s[1], n: list.length, sum: this.mil(list.reduce((a, x) => a + x.s, 0)) + ' mil.', bar: 'height:100%;border-radius:999px;background:#0B0F1A;width:' + Math.max(2, Math.round(list.length / (P.length || 1) * 100)) + '%' };
+    });
+    const old = cnt('nou').filter((x) => x.z > 90).length;
+    const b26 = (d.banks[String(d.year)] || []).filter((b) => b.sum > 0).slice(0, 5);
+    const bmx = b26.length ? b26[0].sum : 1;
+    const banks = b26.map((b) => ({ l: this.bk(b.b), sum: this.mil(b.sum) + ' mil.', n: b.trase, conv: b.conv === null ? '—' : Math.round(b.conv) + '%', bar: 'height:100%;border-radius:999px;background:#0B0F1A;width:' + Math.round(b.sum / bmx * 100) + '%' }));
+    return { ...B, asOf: d.asOf, yr: d.year, yrPrev: d.year - 1, k, months, calls, stages, banks, stale: old + ' dosare cu status „Nou” au peste 90 de zile de la depunere. Merită închise sau actualizate în eKIWI, ca să nu strice statistica.' };
+  }
+}
+Component.persist = { bDone: 'main.bDone' };
+</script>

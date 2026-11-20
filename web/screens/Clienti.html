@@ -1,0 +1,265 @@
+<!-- title: Clienți -->
+<style>
+.in{height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D3D8E0;border-radius:12px;font:inherit;background:#FFFFFF;color:#10151C}
+.li{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:14px;min-height:56px}
+.li:hover{background:#F2F4F7}
+.th{padding:10px 12px;font-weight:600;font-size:12px;color:#5B6472;text-align:left;white-space:nowrap}
+.td{padding:12px;border-top:1px solid #EEF0F3;vertical-align:top}
+</style>
+
+<template>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px">
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Clienți</h1>
+<div style="color: #5B6472">{{summary}}</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+<section class="cd" aria-label="Listă clienți" style="flex: 1 1 320px; max-width: 100%; min-width: 0; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<label for="c-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Caută client</label>
+<input id="c-q" class="in fx" type="search" placeholder="Nume, telefon sau email" value="{{q}}" onChange="{{onQ}}" style="width: 100%">
+<div role="group" aria-label="Filtru" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button class="fx" onClick="{{f.pick}}" aria-pressed="{{f.pressed}}" style="{{f.style}}">{{f.l}}</button>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{list}}" as="c" hint-placeholder-count="8">
+<button class="li fx" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}" style="{{c.style}}">
+<span aria-hidden="true" style="{{c.av}}">{{c.ini}}</span>
+<span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.n}}</span>
+<span style="font-size: 12px; color: #5B6472; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{c.sub}}</span>
+</span>
+<sc-if value="{{c.radar}}" hint-placeholder-val="{{ false }}">
+<span style="flex: 0 0 auto; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: #FFF1E8; color: #9A3412">radar</span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{hasMore}}" hint-placeholder-val="{{ true }}">
+<button class="bt fx" onClick="{{more}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">Arată mai mulți</button>
+</sc-if>
+<div style="font-size: 12px; color: #5B6472">{{shown}}</div>
+</section>
+
+<section aria-label="Fișă client" style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<sc-if value="{{noSel}}" hint-placeholder-val="{{ false }}">
+<div class="cd" style="padding: 40px 24px; text-align: center; color: #5B6472">{{emptyText}}</div>
+</sc-if>
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<div class="cd" style="padding: 22px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+<span class="hd" aria-hidden="true" style="flex: 0 0 auto; width: 64px; height: 64px; border-radius: 20px; background: #0B0F1A; color: #D8C07A; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800">{{sel.ini}}</span>
+<div style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<h2 class="hd" style="margin: 0; font-size: 24px; font-weight: 700">{{sel.n}}</h2>
+<div style="color: #5B6472; font-size: 13px">Client #{{sel.id}} · {{sel.t}} · {{sel.e}}</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a class="bt fx" href="{{sel.tel}}" style="background: #0B0F1A; color: #FFFFFF">Sună</a>
+<a class="bt fx" href="{{sel.mail}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">Email</a>
+<a class="bt fx" href="#Oferte" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">Simulare nouă</a>
+</div>
+</div>
+
+<sc-if value="{{sel.radar}}" hint-placeholder-val="{{ false }}">
+<a class="fx" href="#Radar" style="text-decoration: none; background: #D8C07A; color: #0B0F1A; border-radius: 18px; padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between">
+<span style="display: flex; flex-direction: column; gap: 2px"><strong class="hd" style="font-size: 16px">Oportunitate de refinanțare</strong><span style="font-size: 13px">{{sel.radarText}}</span></span>
+<span style="font-weight: 700; font-size: 13px">Vezi calculul în Radar →</span>
+</a>
+</sc-if>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px">
+<sc-for list="{{sel.stats}}" as="st" hint-placeholder-count="4">
+<div class="cd" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 600; color: #5B6472">{{st.l}}</span>
+<span class="hd" style="font-size: 24px; font-weight: 700">{{st.v}}</span>
+<span style="font-size: 12px; color: #5B6472">{{st.s}}</span>
+</div>
+</sc-for>
+</div>
+
+<div class="cd" style="padding: 6px 0 4px">
+<h3 class="hd" style="margin: 0; padding: 14px 20px 8px; font-size: 16px; font-weight: 700">Dosare</h3>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 760px">
+<thead><tr>
+<th scope="col" class="th" style="padding-left: 20px">Dosar</th>
+<th scope="col" class="th">Bancă</th>
+<th scope="col" class="th">Tip și destinație</th>
+<th scope="col" class="th">Dobândă</th>
+<th scope="col" class="th" style="text-align: right">Depus</th>
+<th scope="col" class="th" style="text-align: right">Tras</th>
+<th scope="col" class="th">Status</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{sel.files}}" as="f" hint-placeholder-count="3">
+<tr>
+<td class="td" style="padding-left: 20px"><div><a href="{{f.href}}" style="font-weight: 600; font-variant-numeric: tabular-nums">#{{f.id}}</a></div><div style="font-size: 12px; color: #5B6472">{{f.dd}}</div></td>
+<td class="td">{{f.b}}</td>
+<td class="td"><div>{{f.tip}}</div><div style="font-size: 12px; color: #5B6472">{{f.de}}</div></td>
+<td class="td">{{f.dob}}</td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums">{{f.sd}}</td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums; font-weight: 600">{{f.st}}</td>
+<td class="td"><span style="{{f.pill}}">{{f.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+<div class="cd" style="flex: 1 1 300px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<h3 class="hd" style="margin: 0; font-size: 16px; font-weight: 700">Istoric</h3>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0">
+<sc-for list="{{sel.events}}" as="ev" hint-placeholder-count="4">
+<li style="display: flex; gap: 12px; padding: 0 0 14px">
+<span aria-hidden="true" style="{{ev.dot}}"></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">{{ev.l}}</span><span style="font-size: 12px; color: #5B6472">{{ev.d}}</span></span>
+</li>
+</sc-for>
+</ol>
+</div>
+
+<div class="cd" style="flex: 1 1 300px; min-width: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px">
+<h3 class="hd" style="margin: 0; font-size: 16px; font-weight: 700">Notițe și sarcini</h3>
+<label for="c-note" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Text notiță sau sarcină</label>
+<input id="c-note" class="in fx" placeholder="Scrie o notiță sau o sarcină" value="{{draft}}" onChange="{{onDraft}}" style="width: 100%">
+<div style="display: flex; gap: 8px">
+<button class="bt fx" onClick="{{addNote}}" style="flex: 1 1 0; border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">Adaugă notiță</button>
+<button class="bt fx" onClick="{{addTask}}" style="flex: 1 1 0; border: 0; background: #0B0F1A; color: #FFFFFF">Adaugă sarcină</button>
+</div>
+<sc-if value="{{noItems}}" hint-placeholder-val="{{ true }}">
+<div style="font-size: 13px; color: #5B6472">Nimic notat încă pentru acest client.</div>
+</sc-if>
+<sc-for list="{{items}}" as="it" hint-placeholder-count="0">
+<label style="display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #F2F4F7; min-height: 24px">
+<sc-if value="{{it.task}}" hint-placeholder-val="{{ false }}">
+<input type="checkbox" checked="{{it.done}}" onChange="{{it.toggle}}" style="margin-top: 2px; width: 18px; height: 18px">
+</sc-if>
+<span style="{{it.style}}">{{it.text}}</span>
+<span style="flex: 0 0 auto; font-size: 11px; font-weight: 700; color: #5B6472">{{it.kind}}</span>
+</label>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</section>
+</div>
+</main>
+</template>
+
+<script>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { cl: null, q: '', filter: 'all', limit: 0, selId: null, draft: '', items: {} }; }
+  componentDidMount() {
+    DATA.load('clients').then((cl) => this.setState({ cl })).catch(() => this.setState({ cl: [] }));
+  }
+  fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
+  bk(b) {
+    const M = { 'UNICREDIT BANK': 'UniCredit', 'OTP BANK ROMANIA': 'OTP Bank', 'ALPHA BANK': 'Alpha Bank', 'GARANTI BANK': 'Garanti BBVA', 'SALT BANK': 'Salt Bank', 'INTESA SANPAOLO': 'Intesa Sanpaolo', 'RAIFFEISEN BANK': 'Raiffeisen', 'ING BANK': 'ING', 'BANCA TRANSILVANIA': 'Banca Transilvania', 'LIBRA INTERNET BANK': 'Libra Bank' };
+    return M[b] || b;
+  }
+  ini(n) { const p = n.split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
+  key(d) { return d ? d.slice(6) + d.slice(3, 5) + d.slice(0, 2) : ''; }
+  onRoute(p) { if (p.c) this.setState({ selId: +p.c, q: '', filter: 'all', limit: 0, draft: '' }); }
+  renderVals() {
+    const s = this.state;
+    const pageSize = this.props.pageSize ?? 12;
+    const cl = s.cl || [];
+    const drawn = (c) => c.f.filter((f) => f[8] > 0);
+    const FIL = [
+      { k: 'all', l: 'Toți', t: () => true },
+      { k: 'drawn', l: 'Cu credit tras', t: (c) => drawn(c).length > 0 },
+      { k: 'none', l: 'Fără credit tras', t: (c) => drawn(c).length === 0 },
+      { k: 'radar', l: 'În radar', t: (c) => !!c.rc }
+    ];
+    const cur = FIL.find((f) => f.k === s.filter);
+    const q = s.q.trim().toLowerCase();
+    const qd = q.replace(/\s/g, '');
+    const F = cl.filter((c) => cur.t(c) && (!q || c.n.toLowerCase().includes(q) || c.e.includes(q) || (qd && /^\d+$/.test(qd) && c.t.replace(/\s/g, '').includes(qd))));
+    const limit = s.limit || pageSize;
+    const sel = F.find((c) => c.id === s.selId) || F[0];
+    const list = F.slice(0, limit).map((c) => {
+      const dr = drawn(c);
+      const on = sel && sel.id === c.id;
+      return {
+        n: c.n, ini: this.ini(c.n), radar: !!c.rc,
+        sub: c.f.length + (c.f.length === 1 ? ' dosar' : ' dosare') + (dr.length ? ' · ' + this.fmt(dr.reduce((a, f) => a + f[8], 0)) + ' lei trași' : ' · fără credit tras'),
+        pressed: on ? 'true' : 'false',
+        style: on ? 'background:#0B0F1A;color:#FFFFFF' : '',
+        av: 'flex:0 0 auto;width:38px;height:38px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;' + (on ? 'background:#D8C07A;color:#0B0F1A' : 'background:#E9ECF1;color:#10151C'),
+        pick: () => this.setState({ selId: c.id, draft: '' })
+      };
+    });
+    const ST = {
+      'Dosar Reconciliat': ['Tras și reconciliat', '#E6F4EE', '#0B5940'], 'Dosar disbursat': ['Tras', '#E6F4EE', '#0B5940'],
+      'Respins client': ['Renunțat de client', '#EEF0F3', '#3D4653'], 'Dosar respins banca': ['Respins de bancă', '#FFF1E8', '#9A3412'],
+      'Respins Kiwi': ['Respins Kiwi', '#FFF1E8', '#9A3412'], 'Duplicat - inchis KIWI': ['Duplicat', '#EEF0F3', '#3D4653'],
+      'Nou': ['Nou, în lucru', '#EAF0FD', '#1A3FA6'], 'Analiza banca': ['Analiză bancă', '#EAF0FD', '#1A3FA6'], 'Dosar aprobat': ['Aprobat', '#FDF6E3', '#7A4E0A']
+    };
+    let selV = {};
+    let items = [];
+    if (sel) {
+      const dr = drawn(sel);
+      const dob = (f) => f[5] === 'Mixta' ? 'Mixtă, ' + f[6] + ' ani fix' : (f[5] === 'Fixa' ? 'Fixă' + (f[6] ? ' ' + f[6] + ' ani' : '') : (f[5] === 'Variabila' ? 'Variabilă' : '—'));
+      const ev = [];
+      sel.f.forEach((f) => {
+        ev.push({ k: this.key(f[9]) + '0', d: f[9], l: 'Dosar depus la ' + this.bk(f[1]) + (f[7] ? ' · ' + this.fmt(f[7]) + ' lei' : ''), c: '#5B6472' });
+        if (f[8] > 0 && f[10]) ev.push({ k: this.key(f[10]) + '2', d: f[10], l: 'Credit tras la ' + this.bk(f[1]) + ' · ' + this.fmt(f[8]) + ' lei', c: '#0B6B4A' });
+        if (f[11] === 'Respins client') ev.push({ k: this.key(f[9]) + '1', d: 'dosar din ' + f[9], l: 'Clientul a renunțat la ' + this.bk(f[1]), c: '#B6BDC8' });
+        if (f[11] === 'Dosar respins banca') ev.push({ k: this.key(f[9]) + '1', d: 'dosar din ' + f[9], l: 'Respins de ' + this.bk(f[1]), c: '#C2410C' });
+      });
+      ev.sort((a, b) => (a.k < b.k ? 1 : -1));
+      const RT = { urgent: 'Perioada de dobândă fixă se încheie în următoarele 90 de zile.', curand: 'Perioada de dobândă fixă se încheie în 3–12 luni.', expirata: 'Perioada de dobândă fixă s-a încheiat, probabil plătește acum dobândă variabilă.', variabila: 'Are credit cu dobândă variabilă, tras din 2021 încoace.' };
+      const years = sel.f.map((f) => +f[9].slice(6)).filter(Boolean);
+      selV = {
+        id: sel.id, n: sel.n, ini: this.ini(sel.n),
+        t: sel.t || 'fără telefon', e: sel.e || 'fără email',
+        tel: sel.t ? 'tel:' + sel.t.replace(/\s/g, '') : '#',
+        mail: sel.e ? 'mailto:' + sel.e : '#',
+        radar: !!sel.rc, radarText: RT[sel.rc] || '',
+        stats: [
+          { l: 'Dosare', v: sel.f.length, s: new Set(sel.f.map((f) => f[1])).size + ' bănci încercate' },
+          { l: 'Credite trase', v: dr.length, s: dr.length ? this.fmt(dr.reduce((a, f) => a + f[8], 0)) + ' lei în total' : 'niciun credit tras' },
+          { l: 'Client din', v: years.length ? Math.min.apply(null, years) : '—', s: 'primul dosar depus' },
+          { l: 'Ultima activitate', v: sel.f[0][9], s: this.bk(sel.f[0][1]) }
+        ],
+        files: sel.f.map((f) => {
+          const st = ST[f[11]] || [f[11], '#EEF0F3', '#3D4653'];
+          return { id: f[0], href: '#Dosare?d=' + f[0], dd: f[9], b: this.bk(f[1]), tip: f[2], de: [f[3], f[4]].filter(Boolean).join(' · '), dob: dob(f), sd: f[7] ? this.fmt(f[7]) : '—', st: f[8] ? this.fmt(f[8]) : '—', status: st[0], pill: 'display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:' + st[1] + ';color:' + st[2] };
+        }),
+        events: ev.slice(0, 8).map((e) => ({ l: e.l, d: e.d, dot: 'flex:0 0 auto;width:10px;height:10px;border-radius:50%;margin-top:5px;background:' + e.c }))
+      };
+      const mine = s.items[sel.id] || [];
+      items = mine.map((it, i) => ({
+        text: it.text, task: it.task, done: !!it.done, kind: it.task ? 'SARCINĂ' : 'NOTIȚĂ',
+        style: 'flex:1 1 auto;min-width:0;line-height:1.45;' + (it.done ? 'text-decoration:line-through;color:#5B6472' : ''),
+        toggle: () => this.setState({ items: { ...this.state.items, [sel.id]: mine.map((x, j) => (j === i ? { ...x, done: !x.done } : x)) } })
+      }));
+    }
+    const add = (task) => () => {
+      const text = s.draft.trim();
+      if (!sel || !text) return;
+      this.setState({ draft: '', items: { ...s.items, [sel.id]: [{ text, task }].concat(s.items[sel.id] || []) } });
+    };
+    return {
+      summary: s.cl ? this.fmt(cl.length) + ' clienți · ' + this.fmt(cl.filter((c) => drawn(c).length).length) + ' cu credit tras · ' + cl.filter((c) => c.rc).length + ' în radarul de refinanțare' : 'Se încarcă…',
+      q: s.q, onQ: (e) => this.setState({ q: e.target.value, limit: 0, selId: null }),
+      filters: FIL.map((f) => ({
+        l: f.l, pressed: s.filter === f.k ? 'true' : 'false',
+        style: 'all:unset;box-sizing:border-box;cursor:pointer;min-height:36px;display:inline-flex;align-items:center;padding:0 12px;border-radius:999px;font-size:13px;font-weight:600;' + (s.filter === f.k ? 'background:#0B0F1A;color:#FFFFFF' : 'background:#F2F4F7;color:#10151C'),
+        pick: () => this.setState({ filter: f.k, limit: 0, selId: null })
+      })),
+      list, hasMore: F.length > limit, more: () => this.setState({ limit: limit + pageSize }),
+      shown: s.cl ? 'Afișez ' + list.length + ' din ' + this.fmt(F.length) + ', după ultima activitate' : '',
+      noSel: !sel, hasSel: !!sel, emptyText: s.cl ? 'Niciun client nu corespunde căutării.' : 'Se încarcă clienții…',
+      sel: selV, items, noItems: items.length === 0,
+      draft: s.draft, onDraft: (e) => this.setState({ draft: e.target.value }),
+      addNote: add(false), addTask: add(true)
+    };
+  }
+}
+Component.persist = { items: 'clienti.items' };
+</script>

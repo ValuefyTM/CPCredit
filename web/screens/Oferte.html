@@ -1,0 +1,201 @@
+<!-- title: Simulator și oferte -->
+<style>
+.in{height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D3D8E0;border-radius:12px;font:inherit;background:#FFFFFF;color:#10151C;font-variant-numeric:tabular-nums}
+.th{padding:10px 12px;font-weight:600;font-size:12px;color:#5B6472;text-align:left}
+.td{padding:8px 12px;border-top:1px solid #EEF0F3}
+</style>
+
+<template>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px">
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Simulator și oferte</h1>
+<div style="color: #5B6472">Introduci datele clientului o dată și vezi băncile ordonate după rată. Ofertele le ții la zi în tabelul de jos.</div>
+</header>
+
+<div role="note" style="border-radius: 14px; background: #FDF6E3; color: #5F3B06; padding: 12px 16px; font-size: 13px; line-height: 1.5">Dobânzile și comisioanele din tabelul de oferte sunt <strong>valori de exemplu</strong>, nu ofertele reale ale băncilor. Înlocuiește-le cu ofertele curente. Rândurile pe care le modifici pierd eticheta „exemplu”.</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start">
+
+<section class="cd" aria-labelledby="o-in" style="flex: 1 1 340px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="o-in" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Datele clientului</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px">
+<sc-for list="{{inputs}}" as="f" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<label for="{{f.id}}" style="font-size: 12px; font-weight: 600">{{f.l}}</label>
+<div style="display: flex; align-items: center; gap: 6px; height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D3D8E0; border-radius: 12px; background: #FFFFFF">
+<input id="{{f.id}}" class="fx" inputmode="decimal" value="{{f.v}}" onChange="{{f.set}}" style="all: unset; flex: 1 1 auto; min-width: 0; font-weight: 600; font-variant-numeric: tabular-nums">
+<span style="font-size: 12px; color: #5B6472">{{f.u}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+<fieldset style="margin: 0; padding: 0; border: 0">
+<legend style="font-size: 12px; font-weight: 600; margin-bottom: 6px">Tip de dobândă comparat</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{types}}" as="t" hint-placeholder-count="3">
+<button class="fx" onClick="{{t.pick}}" aria-pressed="{{t.pressed}}" style="{{t.style}}">{{t.l}}</button>
+</sc-for>
+</div>
+</fieldset>
+<div style="background: #0B0F1A; color: #FFFFFF; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; gap: 12px; align-items: baseline"><span style="font-size: 13px; color: #B6BDC8">Credit necesar</span><span class="hd" style="font-size: 24px; font-weight: 700; color: #D8C07A">{{loanF}}</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px"><span style="color: #B6BDC8">Rată maximă admisă</span><span style="font-weight: 600">{{maxPayF}}</span></div>
+<div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px"><span style="color: #B6BDC8">Credit maxim la cea mai bună ofertă</span><span style="font-weight: 600">{{maxLoanF}}</span></div>
+</div>
+</section>
+
+<section class="cd" aria-labelledby="o-rank" style="flex: 999 1 480px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h2 id="o-rank" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Clasament oferte</h2>
+<div style="font-size: 12px; color: #5B6472">{{rankSub}}</div>
+</div>
+<button class="bt fx" onClick="{{copy}}" style="border: 0; background: #0B0F1A; color: #FFFFFF">{{copyLabel}}</button>
+</div>
+<sc-for list="{{ranked}}" as="r" hint-placeholder-count="6">
+<div style="{{r.style}}">
+<span class="hd" style="flex: 0 0 auto; width: 34px; height: 34px; border-radius: 11px; background: #0B0F1A; color: #FFFFFF; display: inline-flex; align-items: center; justify-content: center; font-weight: 700">{{r.rank}}</span>
+<div style="flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="font-weight: 700">{{r.bank}}</span>
+<span style="font-size: 12px; opacity: 0.8">dobândă {{r.rate}} · comision analiză {{r.fee}}{{r.tag}}</span>
+</div>
+<div style="flex: 0 0 auto; text-align: right">
+<div class="hd" style="font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums">{{r.pay}}</div>
+<div style="font-size: 12px; opacity: 0.8">pe lună · dobânzi totale {{r.interest}}</div>
+</div>
+<span style="{{r.fit}}">{{r.fitL}}</span>
+</div>
+</sc-for>
+<div style="font-size: 12px; color: #5B6472; line-height: 1.5">Rata e calculată cu rate egale și dobândă constantă pe toată perioada. La ofertele cu dobândă fixă 3 sau 5 ani, rata se schimbă după perioada fixă.</div>
+</section>
+</div>
+
+<section class="cd" aria-labelledby="o-tab" style="padding: 6px 0 10px">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 14px 20px 10px">
+<h2 id="o-tab" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Ofertele băncilor</h2>
+<div style="display: flex; align-items: center; gap: 8px">
+<label for="o-ircc" style="font-size: 13px; font-weight: 600">IRCC în vigoare %</label>
+<input id="o-ircc" class="in fx" inputmode="decimal" value="{{ircc}}" onChange="{{onIrcc}}" style="width: 90px">
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 760px">
+<thead><tr>
+<th scope="col" class="th" style="padding-left: 20px">Bancă</th>
+<th scope="col" class="th">Fixă 3 ani %</th>
+<th scope="col" class="th">Fixă 5 ani %</th>
+<th scope="col" class="th">Marjă variabilă % (peste IRCC)</th>
+<th scope="col" class="th">Comision analiză lei</th>
+<th scope="col" class="th">Stare</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{offers}}" as="o" hint-placeholder-count="6">
+<tr>
+<th scope="row" class="td" style="padding-left: 20px; text-align: left; font-weight: 600">{{o.bank}}</th>
+<td class="td"><input class="in fx" aria-label="{{o.a3}}" inputmode="decimal" value="{{o.f3}}" onChange="{{o.s3}}" style="width: 96px"></td>
+<td class="td"><input class="in fx" aria-label="{{o.a5}}" inputmode="decimal" value="{{o.f5}}" onChange="{{o.s5}}" style="width: 96px"></td>
+<td class="td"><input class="in fx" aria-label="{{o.av}}" inputmode="decimal" value="{{o.mv}}" onChange="{{o.sv}}" style="width: 96px"></td>
+<td class="td"><input class="in fx" aria-label="{{o.af}}" inputmode="decimal" value="{{o.fee}}" onChange="{{o.sf}}" style="width: 96px"></td>
+<td class="td"><span style="{{o.tagStyle}}">{{o.tagL}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+</template>
+
+<script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { d: null, type: 'f5', ircc: '5,57', copied: false, off: {}, c: { price: '450000', down: '15', years: '30', income: '9000', debts: '0', dti: '40' } };
+  }
+  componentDidMount() {
+    DATA.load('core').then((d) => this.setState({ d })).catch(() => {});
+  }
+  num(v, d) {
+    if (v === undefined || v === null || v === '') return d;
+    let s = String(v).replace(/\s/g, '');
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(s);
+    return isFinite(n) ? n : d;
+  }
+  fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
+  pct(n) { return n.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'; }
+  bk(b) {
+    const M = { 'UNICREDIT BANK': 'UniCredit', 'OTP BANK ROMANIA': 'OTP Bank', 'ALPHA BANK': 'Alpha Bank', 'GARANTI BANK': 'Garanti BBVA', 'SALT BANK': 'Salt Bank', 'INTESA SANPAOLO': 'Intesa Sanpaolo', 'RAIFFEISEN BANK': 'Raiffeisen', 'ING BANK': 'ING', 'BANCA TRANSILVANIA': 'Banca Transilvania', 'LIBRA INTERNET BANK': 'Libra Bank' };
+    return M[b] || b;
+  }
+  pay(B, rate, m) {
+    if (m <= 0) return 0;
+    const i = rate / 1200;
+    return i === 0 ? B / m : B * i / (1 - Math.pow(1 + i, -m));
+  }
+  renderVals() {
+    const s = this.state;
+    const count = this.props.bankCount ?? 7;
+    const names = s.d ? (s.d.banks[String(s.d.year)] || s.d.banks.all).slice().sort((a, b) => b.dep - a.dep).slice(0, count).map((b) => b.b) : ['BCR', 'UNICREDIT BANK', 'BRD'];
+    const EX = [['5,20', '5,60', '2,30', '0'], ['5,35', '5,75', '2,50', '500'], ['5,49', '5,89', '2,40', '0'], ['5,60', '5,95', '2,65', '300'], ['5,75', '6,05', '2,75', '0'], ['5,90', '6,20', '2,90', '400'], ['5,99', '6,25', '2,95', '0']];
+    const C = { price: this.num(s.c.price, 0), down: this.num(s.c.down, 0), years: this.num(s.c.years, 30), income: this.num(s.c.income, 0), debts: this.num(s.c.debts, 0), dti: this.num(s.c.dti, 40) };
+    const ircc = this.num(s.ircc, 5.57);
+    const loan = Math.max(0, C.price * (1 - C.down / 100));
+    const n = Math.max(12, Math.round(C.years * 12));
+    const maxPay = Math.max(0, C.income * C.dti / 100 - C.debts);
+    const rows = names.map((b, i) => {
+      const ex = EX[i % EX.length];
+      const o = s.off[b] || {};
+      const v = { f3: o.f3 ?? ex[0], f5: o.f5 ?? ex[1], mv: o.mv ?? ex[2], fee: o.fee ?? ex[3] };
+      const edited = !!s.off[b];
+      const setK = (key) => (e) => this.setState({ off: { ...this.state.off, [b]: { ...(this.state.off[b] || {}), [key]: e.target.value } } });
+      const rate = s.type === 'f3' ? this.num(v.f3, 0) : (s.type === 'f5' ? this.num(v.f5, 0) : ircc + this.num(v.mv, 0));
+      const p = this.pay(loan, rate, n);
+      return { b, bank: this.bk(b), v, edited, setK, rate, p, fee: this.num(v.fee, 0) };
+    });
+    const ranked = rows.slice().sort((a, b) => a.p - b.p);
+    const best = ranked[0];
+    const i0 = best ? best.rate / 1200 : 0;
+    const maxLoan = best ? (i0 === 0 ? maxPay * n : maxPay * (1 - Math.pow(1 + i0, -n)) / i0) : 0;
+    const TYPES = [['f3', 'Fixă 3 ani'], ['f5', 'Fixă 5 ani'], ['var', 'Variabilă (IRCC + marjă)']];
+    const INPUTS = [['price', 'Preț imobil', 'lei'], ['down', 'Avans', '%'], ['years', 'Perioadă', 'ani'], ['income', 'Venit net lunar', 'lei'], ['debts', 'Rate existente', 'lei/lună'], ['dti', 'Grad maxim de îndatorare', '%']];
+    const typeL = TYPES.find((t) => t[0] === s.type)[1];
+    const text = 'Simulare credit ' + this.fmt(loan) + ' lei, ' + C.years + ' ani, dobândă ' + typeL.toLowerCase() + ':\n' +
+      ranked.slice(0, 3).map((r, i) => (i + 1) + '. ' + r.bank + ' · dobândă ' + this.pct(r.rate) + ' · rată ' + this.fmt(r.p) + ' lei/lună').join('\n');
+    const tag = (edited) => 'display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;' + (edited ? 'background:#E6F4EE;color:#0B5940' : 'background:#FDF6E3;color:#7A4E0A');
+    return {
+      inputs: INPUTS.map((f) => ({ id: 'o-c-' + f[0], l: f[1], u: f[2], v: s.c[f[0]], set: (e) => this.setState({ c: { ...this.state.c, [f[0]]: e.target.value }, copied: false }) })),
+      types: TYPES.map((t) => ({
+        l: t[1], pressed: s.type === t[0] ? 'true' : 'false',
+        style: 'all:unset;box-sizing:border-box;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;' + (s.type === t[0] ? 'background:#0B0F1A;color:#FFFFFF' : 'background:#F2F4F7;color:#10151C'),
+        pick: () => this.setState({ type: t[0], copied: false })
+      })),
+      loanF: this.fmt(loan) + ' lei',
+      maxPayF: this.fmt(maxPay) + ' lei pe lună',
+      maxLoanF: this.fmt(maxLoan) + ' lei',
+      rankSub: this.fmt(loan) + ' lei · ' + C.years + ' ani · ' + typeL.toLowerCase(),
+      ranked: ranked.map((r, i) => {
+        const total = r.p + C.debts;
+        const ok = total <= C.income * C.dti / 100;
+        return {
+          rank: i + 1, bank: r.bank, rate: this.pct(r.rate), fee: this.fmt(r.fee) + ' lei', tag: r.edited ? '' : ' · exemplu',
+          pay: this.fmt(r.p) + ' lei', interest: this.fmt(Math.max(0, r.p * n - loan)) + ' lei',
+          style: 'display:flex;flex-wrap:wrap;align-items:center;gap:12px 14px;padding:14px 16px;border-radius:16px;' + (i === 0 ? 'background:#D8C07A;color:#0B0F1A' : 'background:#F2F4F7;color:#10151C'),
+          fitL: ok ? 'Se încadrează' : 'Depășește cu ' + this.fmt(total - C.income * C.dti / 100) + ' lei',
+          fit: 'flex:0 0 auto;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;' + (ok ? 'background:#0B0F1A;color:#FFFFFF' : 'background:#FFF1E8;color:#9A3412')
+        };
+      }),
+      copyLabel: s.copied ? 'Copiat' : 'Copiază oferta pentru client',
+      copy: () => { try { navigator.clipboard.writeText(text); } catch (e) {} this.setState({ copied: true }); },
+      ircc: s.ircc, onIrcc: (e) => this.setState({ ircc: e.target.value }),
+      offers: rows.map((r) => ({
+        bank: r.bank, f3: r.v.f3, f5: r.v.f5, mv: r.v.mv, fee: r.v.fee,
+        s3: r.setK('f3'), s5: r.setK('f5'), sv: r.setK('mv'), sf: r.setK('fee'),
+        a3: r.bank + ', dobândă fixă 3 ani', a5: r.bank + ', dobândă fixă 5 ani', av: r.bank + ', marjă variabilă', af: r.bank + ', comision analiză',
+        tagL: r.edited ? 'actualizat' : 'exemplu', tagStyle: tag(r.edited)
+      }))
+    };
+  }
+}
+Component.persist = { off: 'oferte.off', ircc: 'oferte.ircc' };
+</script>

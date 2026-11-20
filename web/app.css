@@ -1,0 +1,30 @@
+/* Stiluri comune tuturor ecranelor. Stilurile proprii fiecărui ecran stau în web/screens/*.html. */
+
+body { margin: 0; background: #F2F4F7; color: #10151C; font-family: Inter, system-ui, sans-serif; font-size: 14px; }
+a { color: #10151C; }
+a:hover { color: #0B6B4A; }
+
+#shell { min-height: 100vh; display: flex; flex-wrap: wrap; }
+#app { display: contents; }
+
+/* Meniul din stânga; pe ecrane înguste trece deasupra conținutului. */
+#nav { flex: 1 0 236px; max-width: 100%; box-sizing: border-box; background: #0B0F1A; color: #B6BDC8; padding: 22px 14px; display: flex; flex-direction: column; gap: 24px; }
+#nav .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+#nav .brand-name { font-family: 'DejaVu Sans', Verdana, Arial, sans-serif; font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: #FFFFFF; }
+#nav .nav-list { display: flex; flex-direction: column; gap: 4px; }
+#nav .grow { flex: 1 1 auto; }
+#nav .badge { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #FF8A4C; color: #0B0F1A; }
+#nav .nv.on .badge { background: #0B0F1A; color: #FFFFFF; }
+#nav .nav-meta { margin-top: auto; border: 1px solid #252C37; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+#nav .nav-meta .strong { color: #FFFFFF; font-weight: 600; }
+#nav .nav-meta .user { overflow-wrap: anywhere; }
+
+.nv { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: #B6BDC8; text-decoration: none; font-weight: 500; box-sizing: border-box; }
+.nv:hover { background: #171D26; color: #FFFFFF; }
+.nv.on, .nv.on:hover { background: #D8C07A; color: #0B0F1A; font-weight: 600; }
+
+.cd { background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 18px; box-sizing: border-box; }
+.hd { font-family: 'Plus Jakarta Sans', Inter, sans-serif; letter-spacing: -0.02em; }
+.fx:focus-visible, .nv:focus-visible { outline: 2px solid #5B8DEF; outline-offset: 2px; }
+.bt { box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; font: inherit; font-weight: 600; text-decoration: none; }
+.in { height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D3D8E0; border-radius: 12px; font: inherit; background: #FFFFFF; color: #10151C; }

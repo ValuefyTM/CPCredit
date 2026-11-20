@@ -1,0 +1,571 @@
+<!-- title: Dosare -->
+<style>
+.in{height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D3D8E0;border-radius:12px;font:inherit;background:#FFFFFF;color:#10151C}
+.kc{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;width:100%}
+.ck{display:flex;align-items:center;gap:10px;min-height:36px;font-size:14px}
+.th{padding:10px 12px;font-weight:600;font-size:12px;color:#5B6472;text-align:left;white-space:nowrap}
+.td{padding:12px;border-top:1px solid #EEF0F3}
+.rw:hover{background:#F7F8FA}
+.nm{all:unset;cursor:pointer;font-weight:600}
+.nm:hover{text-decoration:underline}
+.ot{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;width:100%;padding:10px 12px;border-radius:12px;background:#F2F4F7}
+.ot:hover{background:#E9ECF1}
+</style>
+
+<template>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px">
+
+<sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Dosare</h1>
+<div style="color: #5B6472">{{summary}}</div>
+</div>
+<div role="group" aria-label="Mod de afișare" style="display: inline-flex; gap: 4px; padding: 4px; border-radius: 14px; background: #E4E7EC">
+<sc-for list="{{views}}" as="v" hint-placeholder-count="2">
+<button class="fx" onClick="{{v.pick}}" aria-pressed="{{v.pressed}}" style="{{v.style}}">{{v.l}}</button>
+</sc-for>
+</div>
+</header>
+</sc-if>
+
+<sc-if value="{{isPipe}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<label for="d-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Caută client</label>
+<input id="d-q" class="in fx" type="search" placeholder="Caută client" value="{{q}}" onChange="{{onQ}}" style="width: 220px">
+<label for="d-b" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bancă</label>
+<select id="d-b" class="in fx" value="{{bank}}" onChange="{{onBank}}">
+<sc-for list="{{pipeBanks}}" as="bk" hint-placeholder-count="5">
+<option value="{{bk.v}}">{{bk.l}}</option>
+</sc-for>
+</select>
+<button class="bt fx" onClick="{{toggleStale}}" aria-pressed="{{stalePressed}}" style="{{staleStyle}}">Doar blocate peste 60 de zile</button>
+</div>
+<div style="overflow-x: auto; padding-bottom: 6px">
+<div style="display: grid; grid-template-columns: repeat(4, minmax(250px, 1fr)); gap: 14px; align-items: start; min-width: 1040px">
+<sc-for list="{{cols}}" as="col" hint-placeholder-count="4">
+<section aria-label="{{col.l}}" style="background: #E9ECF1; border-radius: 18px; padding: 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: center; gap: 8px; padding: 4px 6px">
+<span style="{{col.dot}}"></span>
+<h2 class="hd" style="margin: 0; font-size: 15px; font-weight: 700; flex: 1 1 auto">{{col.l}}</h2>
+<span style="font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #FFFFFF">{{col.n}}</span>
+</div>
+<div style="font-size: 12px; color: #3D4653; padding: 0 6px">{{col.sum}}</div>
+<sc-for list="{{col.cards}}" as="c" hint-placeholder-count="4">
+<article class="cd" style="{{c.style}}">
+<button class="kc fx" onClick="{{c.toggle}}" aria-expanded="{{c.exp}}">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: flex-start">
+<span style="font-weight: 600; line-height: 1.3">{{c.n}}</span>
+<span style="{{c.age}}">{{c.z}}</span>
+</div>
+<div style="font-size: 12px; color: #5B6472">{{c.sub}}</div>
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: baseline">
+<span class="hd" style="font-size: 17px; font-weight: 700">{{c.s}}</span>
+<span style="font-size: 12px; color: #5B6472">depus {{c.dd}}</span>
+</div>
+</button>
+<sc-if value="{{c.open}}" hint-placeholder-val="{{ false }}">
+<div style="border-top: 1px solid #EEF0F3; margin-top: 10px; padding-top: 10px; display: flex; flex-direction: column; gap: 8px">
+<div style="font-size: 12px; color: #3D4653; line-height: 1.5">Dosar #{{c.id}} · {{c.meta}}</div>
+<button class="bt fx" onClick="{{c.detail}}" style="min-height: 40px; border: 0; background: #0B0F1A; color: #FFFFFF; font-size: 13px">Deschide dosarul</button>
+<button class="bt fx" onClick="{{c.next}}" style="min-height: 40px; border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C; font-size: 13px">{{c.nextL}}</button>
+</div>
+</sc-if>
+</article>
+</sc-for>
+<sc-if value="{{col.hasMore}}" hint-placeholder-val="{{ false }}">
+<button class="bt fx" onClick="{{col.more}}" style="border: 1px dashed #B6BDC8; background: transparent; color: #10151C; font-size: 13px">{{col.moreL}}</button>
+</sc-if>
+<sc-if value="{{col.empty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 18px 8px; text-align: center; font-size: 13px; color: #5B6472">Niciun dosar aici.</div>
+</sc-if>
+</section>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isAll}}" hint-placeholder-val="{{ false }}">
+<section class="cd" aria-label="Toate dosarele" style="min-width: 0; display: flex; flex-direction: column">
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 16px 18px">
+<label for="a-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Caută dosar</label>
+<input id="a-q" class="in fx" type="search" placeholder="Nume client, nr. dosar sau telefon" value="{{f.q}}" onChange="{{onFQ}}" style="flex: 1 1 240px; min-width: 0">
+<label for="a-s" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Status</label>
+<select id="a-s" class="in fx" value="{{f.st}}" onChange="{{onFSt}}">
+<option value="">Toate statusurile</option>
+<option value="open">În lucru</option>
+<option value="ok">Trase și reconciliate</option>
+<option value="client">Renunțate de client</option>
+<option value="banca">Respinse de bancă</option>
+<option value="alt">Altele</option>
+</select>
+<label for="a-b" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bancă</label>
+<select id="a-b" class="in fx" value="{{f.bank}}" onChange="{{onFBank}}">
+<sc-for list="{{allBanks}}" as="bk" hint-placeholder-count="5">
+<option value="{{bk.v}}">{{bk.l}}</option>
+</sc-for>
+</select>
+<label for="a-y" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">An</label>
+<select id="a-y" class="in fx" value="{{f.year}}" onChange="{{onFYear}}">
+<sc-for list="{{years}}" as="y" hint-placeholder-count="5">
+<option value="{{y.v}}">{{y.l}}</option>
+</sc-for>
+</select>
+<label for="a-o" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Sortare</label>
+<select id="a-o" class="in fx" value="{{sort}}" onChange="{{onSort}}">
+<option value="date">Cele mai noi</option>
+<option value="old">Cele mai vechi</option>
+<option value="sum">Sumă trasă, descrescător</option>
+<option value="dep">Sumă depusă, descrescător</option>
+</select>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 920px">
+<thead><tr style="background: #F7F8FA">
+<th scope="col" class="th" style="padding-left: 18px">Dosar</th>
+<th scope="col" class="th">Client</th>
+<th scope="col" class="th">Bancă</th>
+<th scope="col" class="th">Tip și destinație</th>
+<th scope="col" class="th" style="text-align: right">Sumă depusă</th>
+<th scope="col" class="th" style="text-align: right">Sumă trasă</th>
+<th scope="col" class="th">Status</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="10">
+<tr class="rw" onClick="{{r.open}}" style="cursor: pointer">
+<td class="td" style="padding-left: 18px"><div style="font-weight: 600; font-variant-numeric: tabular-nums">#{{r.id}}</div><div style="font-size: 12px; color: #5B6472">{{r.dd}}</div></td>
+<td class="td"><button class="nm fx">{{r.n}}</button><div style="font-size: 12px; color: #5B6472; margin-top: 2px">{{r.t}}</div></td>
+<td class="td">{{r.b}}</td>
+<td class="td"><div>{{r.tip}}</div><div style="font-size: 12px; color: #5B6472">{{r.de}}</div></td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums">{{r.sd}}</td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums; font-weight: 600">{{r.tr}}</td>
+<td class="td"><span style="{{r.pill}}">{{r.status}}</span></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{noRows}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 36px 18px; text-align: center; color: #5B6472">{{noRowsText}}</div>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 18px; border-top: 1px solid #EEF0F3; font-size: 13px; color: #5B6472">
+<span>{{shown}}</span>
+<sc-if value="{{hasMore}}" hint-placeholder-val="{{ true }}">
+<button class="bt fx" onClick="{{more}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">Arată mai multe</button>
+</sc-if>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{isDet}}" hint-placeholder-val="{{ false }}">
+<div><button class="bt fx" onClick="{{goBack}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>{{backL}}</button></div>
+
+<section class="cd" style="padding: 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; background: #0B0F1A; border-color: #0B0F1A; color: #FFFFFF">
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<span style="{{d.pill}}">{{d.status}}</span>
+<span style="font-size: 13px; color: #B6BDC8">Dosar #{{d.id}} · depus {{d.dd}}</span>
+</div>
+<h1 class="hd" style="margin: 0; font-size: 32px; font-weight: 700; line-height: 1.15">{{d.n}}</h1>
+<div style="font-size: 14px; color: #B6BDC8">{{d.headline}}</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-if value="{{d.hasTel}}" hint-placeholder-val="{{ true }}">
+<a class="bt fx" href="{{d.tel}}" style="background: #D8C07A; color: #0B0F1A">Sună {{d.t}}</a>
+<a class="bt fx" href="{{d.wa}}" target="_blank" rel="noopener" style="background: #0B6B4A; color: #FFFFFF">WhatsApp</a>
+</sc-if>
+<sc-if value="{{d.hasEmail}}" hint-placeholder-val="{{ true }}">
+<a class="bt fx" href="{{d.mail}}" style="border: 1px solid #3A4352; color: #FFFFFF">Email</a>
+</sc-if>
+<a class="bt fx" href="{{d.clientHref}}" style="border: 1px solid #3A4352; color: #FFFFFF">Fișa clientului</a>
+</div>
+</section>
+
+<section aria-label="Cifre cheie" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+<sc-for list="{{d.kpis}}" as="k" hint-placeholder-count="4">
+<div class="cd" style="padding: 18px 20px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 600; color: #5B6472">{{k.l}}</span>
+<span class="hd" style="font-size: 28px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums">{{k.v}}</span>
+<span style="font-size: 12px; color: #5B6472">{{k.s}}</span>
+</div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+<section class="cd" aria-labelledby="dt-credit" style="flex: 1 1 380px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="dt-credit" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Credit</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px 20px">
+<sc-for list="{{d.credit}}" as="x" hint-placeholder-count="6">
+<div style="{{x.style}}"><dt style="font-size: 12px; color: #5B6472">{{x.l}}</dt><dd style="margin: 3px 0 0; font-weight: 600; line-height: 1.35">{{x.v}}</dd></div>
+</sc-for>
+</dl>
+</section>
+<section class="cd" aria-labelledby="dt-dob" style="flex: 1 1 380px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="dt-dob" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Dobândă</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px 20px">
+<sc-for list="{{d.rate}}" as="x" hint-placeholder-count="4">
+<div><dt style="font-size: 12px; color: #5B6472">{{x.l}}</dt><dd style="margin: 3px 0 0; font-weight: 600; line-height: 1.35">{{x.v}}</dd></div>
+</sc-for>
+</dl>
+<sc-if value="{{d.hasFix}}" hint-placeholder-val="{{ false }}">
+<a class="fx" href="#Radar" style="{{d.fixStyle}}">
+<span style="display: flex; flex-direction: column; gap: 2px"><strong>{{d.fixTitle}}</strong><span style="font-size: 13px">{{d.fixText}}</span></span>
+<span style="font-weight: 700; font-size: 13px; white-space: nowrap">Vezi în Radar →</span>
+</a>
+</sc-if>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+<section class="cd" aria-labelledby="dt-par" style="flex: 1 1 380px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="dt-par" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Parcursul dosarului</h2>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+<sc-for list="{{d.events}}" as="ev" hint-placeholder-count="3">
+<li style="display: flex; gap: 14px">
+<span aria-hidden="true" style="flex: 0 0 auto; display: flex; flex-direction: column; align-items: center"><span style="{{ev.dot}}"></span><span style="{{ev.line}}"></span></span>
+<span style="display: flex; flex-direction: column; gap: 2px; padding-bottom: 18px"><span style="font-weight: 600">{{ev.l}}</span><span style="font-size: 13px; color: #5B6472">{{ev.s}}</span></span>
+</li>
+</sc-for>
+</ol>
+</section>
+<section class="cd" aria-labelledby="dt-cl" style="flex: 1 1 380px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="dt-cl" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Client</h2>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px 20px">
+<sc-for list="{{d.client}}" as="x" hint-placeholder-count="4">
+<div><dt style="font-size: 12px; color: #5B6472">{{x.l}}</dt><dd style="margin: 3px 0 0; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere">{{x.v}}</dd></div>
+</sc-for>
+</dl>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h3 style="margin: 0; font-size: 13px; font-weight: 700">{{d.othersTitle}}</h3>
+<sc-for list="{{d.others}}" as="o" hint-placeholder-count="2">
+<button class="ot fx" onClick="{{o.open}}">
+<span style="font-weight: 600; font-variant-numeric: tabular-nums">#{{o.id}}</span>
+<span style="flex: 1 1 140px; min-width: 0; font-size: 13px; color: #3D4653">{{o.sub}}</span>
+<span style="{{o.pill}}">{{o.status}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+<section class="cd" aria-labelledby="dt-doc" style="flex: 1 1 380px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<h2 id="dt-doc" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Documente</h2>
+<span style="font-size: 13px; color: #5B6472">{{d.docCount}}</span>
+</div>
+<div style="height: 8px; border-radius: 999px; background: #EEF0F3; overflow: hidden"><div style="{{d.docBar}}"></div></div>
+<label class="ck"><input type="checkbox" checked="{{d.k0}}" onChange="{{d.t0}}" style="width: 18px; height: 18px"><span>Act de identitate</span></label>
+<label class="ck"><input type="checkbox" checked="{{d.k1}}" onChange="{{d.t1}}" style="width: 18px; height: 18px"><span>Adeverință de venit</span></label>
+<label class="ck"><input type="checkbox" checked="{{d.k2}}" onChange="{{d.t2}}" style="width: 18px; height: 18px"><span>Extras de carte funciară</span></label>
+<label class="ck"><input type="checkbox" checked="{{d.k3}}" onChange="{{d.t3}}" style="width: 18px; height: 18px"><span>Antecontract</span></label>
+<label class="ck"><input type="checkbox" checked="{{d.k4}}" onChange="{{d.t4}}" style="width: 18px; height: 18px"><span>Raport de evaluare</span></label>
+</section>
+<section class="cd" aria-labelledby="dt-note" style="flex: 1 1 380px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="dt-note" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Notițe</h2>
+<div style="display: flex; gap: 8px">
+<label for="dt-in" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Notiță nouă</label>
+<input id="dt-in" class="in fx" placeholder="Scrie o notiță despre dosar" value="{{draft}}" onChange="{{onDraft}}" style="flex: 1 1 auto; min-width: 0">
+<button class="bt fx" onClick="{{addNote}}" style="border: 0; background: #0B0F1A; color: #FFFFFF">Adaugă</button>
+</div>
+<sc-if value="{{noNotes}}" hint-placeholder-val="{{ true }}">
+<div style="font-size: 13px; color: #5B6472">Nicio notiță încă pentru acest dosar.</div>
+</sc-if>
+<sc-for list="{{notes}}" as="nt" hint-placeholder-count="0">
+<div style="padding: 10px 12px; border-radius: 12px; background: #F2F4F7; line-height: 1.45">{{nt.text}}</div>
+</sc-for>
+</section>
+</div>
+<section class="cd" aria-labelledby="dt-files" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h2 id="dt-files" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Fișiere</h2>
+<div style="font-size: 13px; color: #5B6472">{{fl.sub}}</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<label for="dt-ftype" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Tip document</label>
+<select id="dt-ftype" class="in fx" value="{{fl.type}}" onChange="{{fl.onType}}">
+<option value="">Alt document</option>
+<option value="0">Act de identitate</option>
+<option value="1">Adeverință de venit</option>
+<option value="2">Extras de carte funciară</option>
+<option value="3">Antecontract</option>
+<option value="4">Raport de evaluare</option>
+</select>
+<label class="bt fx" for="dt-file" style="border: 0; background: #0B0F1A; color: #FFFFFF">{{fl.btn}}</label>
+<input id="dt-file" type="file" multiple onChange="{{fl.onFile}}" style="position: absolute; width: 1px; height: 1px; opacity: 0">
+</div>
+</div>
+<sc-if value="{{fl.err}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="border-radius: 12px; background: #FFF1E8; color: #7C2D12; padding: 10px 14px; font-size: 13px">{{fl.err}}</div>
+</sc-if>
+<sc-if value="{{fl.empty}}" hint-placeholder-val="{{ false }}">
+<div style="font-size: 13px; color: #5B6472">Niciun fișier încărcat pentru acest dosar.</div>
+</sc-if>
+<sc-for list="{{fl.list}}" as="f" hint-placeholder-count="0">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 12px; border-radius: 12px; background: #F2F4F7">
+<div style="flex: 1 1 220px; min-width: 0"><div style="font-weight: 600; overflow-wrap: anywhere">{{f.name}}</div><div style="font-size: 12px; color: #5B6472">{{f.sub}}</div></div>
+<a class="bt fx" href="{{f.href}}" target="_blank" rel="noopener" style="min-height: 40px; border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C; font-size: 13px">Deschide</a>
+<button class="bt fx" onClick="{{f.del}}" style="min-height: 40px; border: 1px solid #D3D8E0; background: #FFFFFF; color: #9A3412; font-size: 13px">{{f.delL}}</button>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+</main>
+</template>
+
+<script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = { rows: null, view: 'pipe', back: 'pipe', detId: null, q: '', bank: '', stale: false, openId: null, moved: {}, docs: {}, all: {}, f: { q: '', st: '', bank: '', year: '' }, sort: 'date', limit: 0, notes: {}, draft: '', files: {}, fType: '', fBusy: false, fErr: '', fDel: null };
+  }
+  componentDidMount() {
+    DATA.load('dosare').then((arr) => {
+      const rows = arr.map((a) => ({ id: a[0], cid: a[1], n: a[2], b: a[3], tip: a[4], de: a[5], fin: a[6], td: a[7], af: a[8], prod: a[9], r: a[10], sd: a[11], val: a[12], tr: a[13], dd: a[14], dt: a[15], status: a[16], e: a[17], t: a[18], k: a[19], z: a[20] }));
+      this.setState({ rows });
+    }).catch(() => this.setState({ rows: [] }));
+  }
+  fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
+  mil(n) { return (n / 1e6).toLocaleString('ro-RO', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+  bk(b) {
+    const M = { 'UNICREDIT BANK': 'UniCredit', 'OTP BANK ROMANIA': 'OTP Bank', 'ALPHA BANK': 'Alpha Bank', 'GARANTI BANK': 'Garanti BBVA', 'SALT BANK': 'Salt Bank', 'INTESA SANPAOLO': 'Intesa Sanpaolo', 'RAIFFEISEN BANK': 'Raiffeisen', 'ING BANK': 'ING', 'BANCA TRANSILVANIA': 'Banca Transilvania', 'LIBRA INTERNET BANK': 'Libra Bank' };
+    return M[b] || b;
+  }
+  date(s) { const p = s.split('.'); return new Date(+p[2], +p[1] - 1, +p[0]); }
+  days(a, b) { return Math.round((b - a) / 86400000); }
+  openDetail(id, back) {
+    this.setState({ view: 'detail', detId: id, back: back || this.state.back, draft: '', fErr: '', fDel: null });
+    this.loadFiles(id);
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  loadFiles(id) {
+    API.get('/api/dosare/' + id + '/files')
+      .then((r) => this.setState({ files: { ...this.state.files, [id]: r.files } }))
+      .catch(() => this.setState({ files: { ...this.state.files, [id]: [] }, fErr: 'Nu am putut încărca lista de fișiere.' }));
+  }
+  async uploadFiles(id, list) {
+    const type = this.state.fType;
+    this.setState({ fBusy: true, fErr: '' });
+    let err = '';
+    for (const f of list) {
+      if (f.size > 25 * 1024 * 1024) { err = f.name + ' depășește 25 MB.'; continue; }
+      try { await API.upload(id, f, type); } catch (e) { err = 'Nu am putut încărca ' + f.name + '.'; }
+    }
+    const patch = { fBusy: false, fErr: err };
+    if (type !== '' && !err) patch.docs = { ...this.state.docs, [id]: { ...(this.state.docs[id] || {}), [type]: true } };
+    this.setState(patch);
+    this.loadFiles(id);
+  }
+  removeFile(id, fileId) {
+    API.send('DELETE', '/api/files/' + fileId)
+      .then(() => { this.setState({ fDel: null }); this.loadFiles(id); })
+      .catch(() => this.setState({ fErr: 'Nu am putut șterge fișierul.', fDel: null }));
+  }
+  onRoute(p) { if (p.d) this.openDetail(+p.d, this.state.view === 'detail' ? this.state.back : this.state.view); }
+  renderVals() {
+    const s = this.state;
+    const perCol = this.props.perCol ?? 5;
+    const pageSize = this.props.pageSize ?? 25;
+    const all = s.rows || [];
+    const now = new Date();
+    const TODAY = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const OPEN = { 'Nou': 'nou', 'Analiza banca': 'analiza', 'Dosar aprobat': 'aprobat', 'Dosar disbursat': 'tras' };
+    const ST = {
+      'Dosar Reconciliat': ['Tras și reconciliat', '#E6F4EE', '#0B5940'], 'Dosar disbursat': ['Tras, de reconciliat', '#E6F4EE', '#0B5940'],
+      'Respins client': ['Renunțat de client', '#EEF0F3', '#3D4653'], 'Dosar respins banca': ['Respins de bancă', '#FFF1E8', '#9A3412'],
+      'Respins Kiwi': ['Respins Kiwi', '#FFF1E8', '#9A3412'], 'Duplicat - inchis KIWI': ['Duplicat', '#EEF0F3', '#3D4653'],
+      'Nou': ['Nou, în lucru', '#EAF0FD', '#1A3FA6'], 'Analiza banca': ['Analiză bancă', '#EAF0FD', '#1A3FA6'], 'Dosar aprobat': ['Aprobat', '#FDF6E3', '#7A4E0A']
+    };
+    const stOf = (x) => ST[x.status] || [x.status, '#EEF0F3', '#3D4653'];
+    const pill = (st) => 'display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:' + st[1] + ';color:' + st[2];
+    const RO = { 'Credit cu ipoteca': 'Credit cu ipotecă', 'Noua Casa': 'Noua Casă', 'Achizitie imobil': 'Achiziție imobil', 'Constructie': 'Construcție', 'Achizitie teren': 'Achiziție teren', 'Refinantare': 'Refinanțare', 'Refinantare cu suplimentare': 'Refinanțare cu suplimentare', 'Nou': 'Credit nou', 'Mixta': 'Mixtă', 'Fixa': 'Fixă', 'Variabila': 'Variabilă' };
+    const ro = (v) => RO[v] || v;
+
+    // pipeline
+    const ORDER = ['nou', 'analiza', 'aprobat', 'tras', 'gata'];
+    const COLS = [
+      { k: 'nou', l: 'Nou', c: '#5B6472', next: 'Mută în Analiză bancă' },
+      { k: 'analiza', l: 'Analiză bancă', c: '#2F6FED', next: 'Mută în Aprobat' },
+      { k: 'aprobat', l: 'Aprobat', c: '#B7791F', next: 'Mută în Tras' },
+      { k: 'tras', l: 'Tras, de reconciliat', c: '#0B6B4A', next: 'Marchează reconciliat' }
+    ];
+    const P = all.filter((x) => OPEN[x.status]).map((x) => ({ ...x, st: s.moved[x.id] || OPEN[x.status], s: x.tr > 0 ? x.tr : x.sd })).filter((x) => x.st !== 'gata');
+    const q = s.q.trim().toLowerCase();
+    const F = P.filter((x) => (!s.bank || x.b === s.bank) && (!q || x.n.toLowerCase().includes(q)) && (!s.stale || x.z > 60));
+    const age = (z) => 'flex:0 0 auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;' +
+      (z > 90 ? 'background:#FFF1E8;color:#9A3412' : (z > 30 ? 'background:#FDF6E3;color:#7A4E0A' : 'background:#E6F4EE;color:#0B5940'));
+    const cols = s.view !== 'pipe' ? [] : COLS.map((col) => {
+      const list = F.filter((x) => x.st === col.k);
+      const showAll = !!s.all[col.k];
+      return {
+        l: col.l, n: list.length, sum: this.mil(list.reduce((a, x) => a + x.s, 0)) + ' mil. lei',
+        dot: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + col.c,
+        hasMore: list.length > perCol, moreL: showAll ? 'Arată mai puține' : 'Arată toate cele ' + list.length,
+        more: () => this.setState({ all: { ...s.all, [col.k]: !showAll } }),
+        empty: !!s.rows && list.length === 0,
+        cards: (showAll ? list : list.slice(0, perCol)).map((x) => {
+          const open = s.openId === x.id;
+          return {
+            id: x.id, n: x.n, z: x.z + ' zile', age: age(x.z), dd: x.dd,
+            sub: this.bk(x.b) + ' · ' + ro(x.de || x.tip), s: this.fmt(x.s) + ' lei',
+            meta: [ro(x.tip), ro(x.fin), x.t].filter(Boolean).join(' · '),
+            open, exp: open ? 'true' : 'false',
+            style: 'padding:14px;' + (open ? 'border-color:#0B0F1A;box-shadow:0 8px 24px rgba(11,15,26,0.10)' : ''),
+            toggle: () => this.setState({ openId: open ? null : x.id }),
+            detail: () => this.openDetail(x.id, 'pipe'),
+            nextL: col.next,
+            next: () => this.setState({ moved: { ...this.state.moved, [x.id]: ORDER[ORDER.indexOf(col.k) + 1] } })
+          };
+        })
+      };
+    });
+    const pipeBankSet = Array.from(new Set(P.map((x) => x.b))).sort();
+    const avg = F.length ? Math.round(F.reduce((a, x) => a + x.z, 0) / F.length) : 0;
+
+    // all files
+    const f = s.f;
+    const fq = f.q.trim().toLowerCase();
+    const fqd = fq.replace(/[\s#]/g, '');
+    const isNum = /^\d+$/.test(fqd);
+    const GROUP = { open: (x) => !!OPEN[x.status], ok: (x) => x.status === 'Dosar Reconciliat', client: (x) => x.status === 'Respins client', banca: (x) => x.status === 'Dosar respins banca', alt: (x) => x.status === 'Respins Kiwi' || x.status === 'Duplicat - inchis KIWI' };
+    let A = [];
+    if (s.view === 'all') {
+      A = all.filter((x) => (!f.st || GROUP[f.st](x)) && (!f.bank || x.b === f.bank) && (!f.year || String(x.k).slice(0, 4) === f.year) &&
+        (!fq || x.n.toLowerCase().includes(fq) || (isNum && (String(x.id).includes(fqd) || x.t.replace(/\s/g, '').includes(fqd)))));
+      if (s.sort === 'old') A = A.slice().sort((a, b) => a.k - b.k);
+      if (s.sort === 'sum') A = A.slice().sort((a, b) => b.tr - a.tr);
+      if (s.sort === 'dep') A = A.slice().sort((a, b) => b.sd - a.sd);
+    }
+    const limit = s.limit || pageSize;
+    const rows = A.slice(0, limit).map((x) => {
+      const st = stOf(x);
+      return { id: x.id, dd: x.dd, n: x.n, t: x.t || 'fără telefon', b: this.bk(x.b), tip: ro(x.tip), de: [ro(x.de), ro(x.fin)].filter(Boolean).join(' · '), sd: x.sd ? this.fmt(x.sd) : '—', tr: x.tr ? this.fmt(x.tr) : '—', status: st[0], pill: pill(st), open: () => this.openDetail(x.id, 'all') };
+    });
+    const allBankSet = s.view === 'all' ? Array.from(new Set(all.map((x) => x.b))).sort() : [];
+    const setF = (key) => (e) => this.setState({ f: { ...this.state.f, [key]: e.target.value }, limit: 0 });
+
+    // detail
+    let d = {};
+    let notes = [];
+    let fl = {};
+    const x = s.view === 'detail' ? all.find((r) => r.id === s.detId) : null;
+    if (x) {
+      const st = stOf(x);
+      const digits = (x.t || '').replace(/\D/g, '');
+      const dDep = this.date(x.dd);
+      const dTr = x.dt ? this.date(x.dt) : null;
+      const toDraw = dTr ? this.days(dDep, dTr) : null;
+      const dobL = x.td === 'Mixta' ? 'Mixtă' : (x.td === 'Fixa' ? 'Fixă' : (x.td === 'Variabila' ? 'Variabilă' : 'Nenotat'));
+      let fix = null;
+      if (x.af > 0 && dTr && x.tr > 0) {
+        const ex = new Date(dTr.getFullYear() + x.af, dTr.getMonth(), dTr.getDate());
+        fix = { ex, left: this.days(TODAY, ex), txt: ('0' + ex.getDate()).slice(-2) + '.' + ('0' + (ex.getMonth() + 1)).slice(-2) + '.' + ex.getFullYear() };
+      }
+      const ev = [{ l: 'Dosar depus la ' + this.bk(x.b), s: x.dd + (x.sd ? ' · ' + this.fmt(x.sd) + ' lei solicitați' : ''), c: '#0B0F1A' }];
+      if (x.tr > 0) ev.push({ l: 'Credit tras · ' + this.fmt(x.tr) + ' lei', s: x.dt ? x.dt + (toDraw !== null && toDraw >= 0 ? ' · la ' + toDraw + ' zile de la depunere' : '') : 'data tragerii nu e notată', c: '#0B6B4A' });
+      if (x.status === 'Dosar Reconciliat') ev.push({ l: 'Dosar reconciliat', s: 'finalizat', c: '#0B6B4A' });
+      else if (x.status === 'Respins client') ev.push({ l: 'Clientul a renunțat', s: 'dosar închis', c: '#8A93A1' });
+      else if (x.status === 'Dosar respins banca') ev.push({ l: 'Respins de bancă', s: 'dosar închis', c: '#C2410C' });
+      else if (x.status === 'Respins Kiwi') ev.push({ l: 'Respins Kiwi', s: 'dosar închis', c: '#C2410C' });
+      else if (x.status === 'Duplicat - inchis KIWI') ev.push({ l: 'Închis ca duplicat', s: 'dosar închis', c: '#8A93A1' });
+      else ev.push({ l: 'În lucru: ' + st[0], s: 'de ' + x.z + ' zile de la depunere', c: '#2F6FED' });
+      const dk = s.docs[x.id] || {};
+      const tg = (i) => () => this.setState({ docs: { ...this.state.docs, [x.id]: { ...(this.state.docs[x.id] || {}), [i]: !dk[i] } } });
+      const nDoc = [0, 1, 2, 3, 4].filter((i) => dk[i]).length;
+      const others = all.filter((r) => r.cid === x.cid && r.id !== x.id);
+      d = {
+        id: x.id, n: x.n, dd: x.dd, status: st[0], pill: pill(st), clientHref: '#Clienti?c=' + x.cid,
+        headline: [this.bk(x.b), ro(x.tip), ro(x.de), ro(x.fin)].filter(Boolean).join(' · '),
+        t: x.t, hasTel: digits.length >= 9, tel: 'tel:' + digits,
+        wa: 'https://wa.me/' + (digits.charAt(0) === '0' ? '40' + digits.slice(1) : digits),
+        hasEmail: !!x.e, mail: 'mailto:' + x.e + '?subject=' + encodeURIComponent('Dosarul tău de credit la ' + this.bk(x.b)),
+        kpis: [
+          { l: 'Sumă depusă', v: x.sd ? this.fmt(x.sd) : '—', s: x.sd ? 'lei solicitați' : 'nenotată' },
+          { l: 'Sumă trasă', v: x.tr ? this.fmt(x.tr) : '—', s: x.tr ? (x.sd ? Math.round(x.tr / x.sd * 100) + '% din suma depusă' : 'lei') : 'credit netras' },
+          { l: 'Dobândă la acordare', v: x.r > 0 ? x.r.toLocaleString('ro-RO', { minimumFractionDigits: 2 }) + '%' : '—', s: x.r > 0 ? dobL.toLowerCase() : 'nenotată în eKIWI' },
+          x.tr > 0 && toDraw !== null && toDraw >= 0 ? { l: 'Durată până la tragere', v: toDraw + ' zile', s: 'de la depunere la tragere' } : (OPEN[x.status] ? { l: 'Vechime dosar', v: x.z + ' zile', s: 'de la depunere' } : { l: 'Durată până la tragere', v: '—', s: x.tr > 0 ? 'date de tragere incomplete' : 'credit netras' })
+        ],
+        credit: [
+          { l: 'Bancă', v: this.bk(x.b), style: '' },
+          { l: 'Tip credit', v: ro(x.tip) || '—', style: '' },
+          { l: 'Destinație', v: ro(x.de) || '—', style: '' },
+          { l: 'Tip finanțare', v: ro(x.fin) || '—', style: '' },
+          { l: 'Valută', v: x.val || '—', style: '' },
+          { l: 'Produs', v: x.prod || '—', style: 'grid-column:1 / -1' }
+        ],
+        rate: [
+          { l: 'Tip dobândă', v: dobL },
+          { l: 'Perioadă fixă', v: x.af > 0 ? x.af + ' ani' : 'fără' },
+          { l: 'Rată la acordare', v: x.r > 0 ? x.r.toLocaleString('ro-RO', { minimumFractionDigits: 2 }) + '%' : 'nenotată' },
+          { l: 'Final perioadă fixă', v: fix ? fix.txt : '—' }
+        ],
+        hasFix: !!fix,
+        fixTitle: fix ? (fix.left >= 0 ? 'Perioada fixă expiră în ' + fix.left + ' zile' : 'Perioada fixă a expirat de ' + (-fix.left) + ' zile') : '',
+        fixText: fix ? (fix.left >= 0 ? 'Pe ' + fix.txt + ' dobânda devine variabilă.' : 'Din ' + fix.txt + ' creditul are dobândă variabilă.') : '',
+        fixStyle: 'text-decoration:none;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;border-radius:14px;padding:14px 16px;color:#0B0F1A;background:' + (fix && fix.left >= 0 && fix.left <= 365 ? '#D8C07A' : '#F2F4F7'),
+        events: ev.map((e, i) => ({ l: e.l, s: e.s, dot: 'width:12px;height:12px;border-radius:50%;margin-top:4px;background:' + e.c, line: i < ev.length - 1 ? 'flex:1 1 auto;width:2px;background:#E4E7EC;margin:4px 0' : 'display:none' })),
+        client: [
+          { l: 'Nume', v: x.n }, { l: 'ID client', v: '#' + x.cid },
+          { l: 'Telefon', v: x.t || 'nenotat' }, { l: 'Email', v: x.e || 'nenotat' }
+        ],
+        othersTitle: others.length ? 'Alte dosare ale clientului (' + others.length + ')' : 'Clientul nu are alte dosare',
+        others: others.map((o) => { const os = stOf(o); return { id: o.id, sub: this.bk(o.b) + ' · ' + o.dd + ' · ' + this.fmt(o.tr > 0 ? o.tr : o.sd) + ' lei', status: os[0], pill: pill(os), open: () => this.openDetail(o.id) }; }),
+        k0: !!dk[0], k1: !!dk[1], k2: !!dk[2], k3: !!dk[3], k4: !!dk[4],
+        t0: tg(0), t1: tg(1), t2: tg(2), t3: tg(3), t4: tg(4),
+        docCount: nDoc + ' din 5 primite',
+        docBar: 'height:100%;border-radius:999px;background:#0B6B4A;width:' + (nDoc * 20) + '%'
+      };
+      notes = (s.notes[x.id] || []).map((t) => ({ text: t }));
+      const DOCS = ['Act de identitate', 'Adeverință de venit', 'Extras de carte funciară', 'Antecontract', 'Raport de evaluare'];
+      const flist = s.files[x.id];
+      const kb = (n) => (n >= 1048576 ? (n / 1048576).toLocaleString('ro-RO', { maximumFractionDigits: 1 }) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
+      fl = {
+        sub: !flist ? 'Se încarcă…' : (flist.length ? flist.length + (flist.length === 1 ? ' fișier' : ' fișiere') + ' · ' + kb(flist.reduce((a, f) => a + f.size, 0)) : 'Contracte, acte, extrase. Maximum 25 MB pe fișier.'),
+        type: s.fType, onType: (e) => this.setState({ fType: e.target.value }),
+        btn: s.fBusy ? 'Se încarcă…' : 'Încarcă fișiere',
+        onFile: (e) => { const list = Array.from(e.target.files || []); if (list.length && !this.state.fBusy) this.uploadFiles(x.id, list); },
+        err: s.fErr, empty: !!flist && flist.length === 0,
+        list: (flist || []).map((f) => ({
+          name: f.name,
+          sub: [DOCS[f.doc_type] || 'Alt document', kb(f.size), f.uploaded_at.slice(8, 10) + '.' + f.uploaded_at.slice(5, 7) + '.' + f.uploaded_at.slice(0, 4)].join(' · '),
+          href: '/api/files/' + f.id,
+          delL: s.fDel === f.id ? 'Sigur? Șterge definitiv' : 'Șterge',
+          del: () => (s.fDel === f.id ? this.removeFile(x.id, f.id) : this.setState({ fDel: f.id }))
+        }))
+      };
+    }
+    const seg = (on) => 'all:unset;box-sizing:border-box;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;padding:0 16px;border-radius:10px;font-size:14px;font-weight:600;' + (on ? 'background:#0B0F1A;color:#FFFFFF' : 'color:#10151C');
+    return {
+      isList: s.view !== 'detail', isPipe: s.view === 'pipe', isAll: s.view === 'all', isDet: s.view === 'detail' && !!x,
+      summary: !s.rows ? 'Se încarcă…' : (s.view === 'all'
+        ? this.fmt(A.length) + ' din ' + this.fmt(all.length) + ' dosare · ' + this.mil(A.reduce((a, r) => a + r.tr, 0)) + ' mil. lei trași'
+        : F.length + ' dosare în lucru · ' + this.mil(F.reduce((a, r) => a + r.s, 0)) + ' mil. lei · în medie ' + avg + ' zile de la depunere'),
+      views: [['pipe', 'Pipeline'], ['all', 'Toate dosarele']].map((v) => ({ l: v[1], pressed: s.view === v[0] ? 'true' : 'false', style: seg(s.view === v[0]), pick: () => this.setState({ view: v[0], back: v[0], limit: 0 }) })),
+      q: s.q, bank: s.bank,
+      onQ: (e) => this.setState({ q: e.target.value }),
+      onBank: (e) => this.setState({ bank: e.target.value }),
+      pipeBanks: [{ v: '', l: 'Toate băncile' }].concat(pipeBankSet.map((b) => ({ v: b, l: this.bk(b) }))),
+      toggleStale: () => this.setState({ stale: !s.stale }),
+      stalePressed: s.stale ? 'true' : 'false',
+      staleStyle: s.stale ? 'border:1px solid #0B0F1A;background:#0B0F1A;color:#FFFFFF' : 'border:1px solid #D3D8E0;background:#FFFFFF;color:#10151C',
+      cols,
+      f, sort: s.sort,
+      onFQ: setF('q'), onFSt: setF('st'), onFBank: setF('bank'), onFYear: setF('year'),
+      onSort: (e) => this.setState({ sort: e.target.value, limit: 0 }),
+      allBanks: [{ v: '', l: 'Toate băncile' }].concat(allBankSet.map((b) => ({ v: b, l: this.bk(b) }))),
+      years: [{ v: '', l: 'Toți anii' }].concat(Array.from(new Set(all.map((r) => String(r.k).slice(0, 4)))).sort().reverse().map((y) => ({ v: y, l: y }))),
+      rows, noRows: s.view === 'all' && A.length === 0, noRowsText: s.rows ? 'Niciun dosar nu corespunde filtrelor.' : 'Se încarcă dosarele…',
+      shown: 'Afișez ' + rows.length + ' din ' + this.fmt(A.length),
+      hasMore: A.length > rows.length, more: () => this.setState({ limit: limit + pageSize }),
+      d, notes, fl, noNotes: notes.length === 0,
+      backL: s.back === 'all' ? 'Înapoi la toate dosarele' : 'Înapoi la pipeline',
+      goBack: () => this.setState({ view: s.back, detId: null }),
+      draft: s.draft, onDraft: (e) => this.setState({ draft: e.target.value }),
+      addNote: () => { const t = s.draft.trim(); if (!x || !t) return; this.setState({ draft: '', notes: { ...s.notes, [x.id]: [t].concat(s.notes[x.id] || []) } }); }
+    };
+  }
+}
+Component.persist = { moved: 'dosare.moved', docs: 'dosare.docs', notes: 'dosare.notes' };
+</script>

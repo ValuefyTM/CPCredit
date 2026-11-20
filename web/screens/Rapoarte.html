@@ -1,0 +1,204 @@
+<!-- title: Rapoarte -->
+<style>
+.in{height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D3D8E0;border-radius:12px;font:inherit;background:#FFFFFF;color:#10151C}
+.th{padding:10px 12px;font-weight:600;font-size:12px;color:#5B6472;text-align:left;white-space:nowrap}
+.td{padding:12px;border-top:1px solid #EEF0F3;font-variant-numeric:tabular-nums}
+.yb{all:unset;box-sizing:border-box;cursor:pointer;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;height:100%;border-radius:10px}
+</style>
+
+<template>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px">
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Rapoarte</h1>
+<div style="color: #5B6472">{{periodLabel}}</div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<label for="p-y" style="font-size: 13px; font-weight: 600">Perioadă</label>
+<select id="p-y" class="in fx" value="{{year}}" onChange="{{onYear}}">
+<sc-for list="{{yearOpts}}" as="y" hint-placeholder-count="9">
+<option value="{{y.v}}">{{y.l}}</option>
+</sc-for>
+</select>
+</div>
+</header>
+
+<section aria-label="Indicatori" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+<div class="cd" style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+<span style="font-size: 12px; font-weight: 600; color: #5B6472">{{k.l}}</span>
+<span class="hd" style="font-size: 30px; font-weight: 700; line-height: 1.15">{{k.v}}</span>
+<span style="font-size: 12px; color: #5B6472">{{k.s}}</span>
+</div>
+</sc-for>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px">
+<section class="cd" aria-labelledby="p-vol" style="flex: 1 1 420px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="p-vol" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Volum tras pe ani</h2>
+<span style="font-size: 12px; color: #5B6472">mil. lei · apasă pe un an ca să filtrezi</span>
+</div>
+<div style="display: flex; align-items: flex-end; gap: 10px; height: 230px">
+<sc-for list="{{vol}}" as="b" hint-placeholder-count="8">
+<button class="yb fx" onClick="{{b.pick}}" aria-pressed="{{b.pressed}}" aria-label="{{b.aria}}">
+<span style="font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums">{{b.v}}</span>
+<span style="{{b.bar}}"></span>
+<span style="{{b.lab}}">{{b.y}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section class="cd" aria-labelledby="p-conv" style="flex: 1 1 420px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px">
+<h2 id="p-conv" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Rată de reușită pe ani</h2>
+<span style="font-size: 12px; color: #5B6472">credite trase din dosarele închise, după anul depunerii</span>
+</div>
+<div role="img" aria-label="Rata de reușită pe ani" style="display: flex; align-items: flex-end; gap: 10px; height: 230px">
+<sc-for list="{{conv}}" as="b" hint-placeholder-count="8">
+<div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; height: 100%">
+<span style="font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums">{{b.v}}</span>
+<span style="{{b.bar}}"></span>
+<span style="{{b.lab}}">{{b.y}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+</div>
+
+<section class="cd" aria-labelledby="p-bank" style="padding: 6px 0 4px">
+<h2 id="p-bank" class="hd" style="margin: 0; padding: 14px 20px 8px; font-size: 18px; font-weight: 700">Bănci · {{periodShort}}</h2>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 780px">
+<thead><tr>
+<th scope="col" class="th" style="padding-left: 20px">Bancă</th>
+<th scope="col" class="th" style="text-align: right">Dosare depuse</th>
+<th scope="col" class="th" style="text-align: right">Credite trase</th>
+<th scope="col" class="th" style="width: 34%">Volum tras</th>
+<th scope="col" class="th" style="text-align: right">Reușită</th>
+<th scope="col" class="th" style="text-align: right">Zile până la tragere</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{banks}}" as="b" hint-placeholder-count="6">
+<tr>
+<th scope="row" class="td" style="padding-left: 20px; text-align: left; font-weight: 600">{{b.l}}</th>
+<td class="td" style="text-align: right">{{b.dep}}</td>
+<td class="td" style="text-align: right">{{b.trase}}</td>
+<td class="td"><div style="display: flex; align-items: center; gap: 10px"><div style="flex: 1 1 auto; height: 10px; border-radius: 999px; background: #EEF0F3; overflow: hidden"><div style="{{b.bar}}"></div></div><span style="flex: 0 0 76px; text-align: right; font-weight: 600">{{b.sum}}</span></div></td>
+<td class="td" style="text-align: right"><span style="{{b.convStyle}}">{{b.conv}}</span></td>
+<td class="td" style="text-align: right">{{b.days}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="padding: 10px 20px 12px; font-size: 12px; color: #5B6472">Zilele până la tragere sunt mediana de la depunere la tragere, pentru dosarele unde ambele date sunt notate.</div>
+</section>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px">
+<section class="cd" aria-labelledby="p-out" style="flex: 1 1 420px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="p-out" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Ce s-a întâmplat cu dosarele · toată perioada</h2>
+<sc-for list="{{outcomes}}" as="o" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; gap: 12px"><span style="font-weight: 600">{{o.l}}</span><span style="font-variant-numeric: tabular-nums"><strong>{{o.n}}</strong> · {{o.p}}</span></div>
+<div style="height: 10px; border-radius: 999px; background: #EEF0F3; overflow: hidden"><div style="{{o.bar}}"></div></div>
+</div>
+</sc-for>
+</section>
+
+<section class="cd" aria-labelledby="p-mix" style="flex: 1 1 420px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="p-mix" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Structura creditelor trase · toată perioada</h2>
+<sc-for list="{{mixes}}" as="m" hint-placeholder-count="3">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">{{m.l}}</span>
+<div style="display: flex; height: 14px; border-radius: 999px; overflow: hidden; gap: 2px">
+<sc-for list="{{m.seg}}" as="g" hint-placeholder-count="3">
+<span style="{{g.bar}}"></span>
+</sc-for>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px">
+<sc-for list="{{m.seg}}" as="g" hint-placeholder-count="3">
+<span style="display: inline-flex; align-items: center; gap: 6px"><span style="{{g.dot}}"></span>{{g.l}} <strong>{{g.p}}</strong></span>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</section>
+</div>
+</main>
+</template>
+
+<script>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { d: null, year: 'all' }; }
+  componentDidMount() {
+    DATA.load('core').then((d) => this.setState({ d })).catch(() => {});
+  }
+  fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
+  mil(n) { return (n / 1e6).toLocaleString('ro-RO', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+  bk(b) {
+    const M = { 'UNICREDIT BANK': 'UniCredit', 'OTP BANK ROMANIA': 'OTP Bank', 'ALPHA BANK': 'Alpha Bank', 'GARANTI BANK': 'Garanti BBVA', 'SALT BANK': 'Salt Bank', 'INTESA SANPAOLO': 'Intesa Sanpaolo', 'RAIFFEISEN BANK': 'Raiffeisen', 'ING BANK': 'ING', 'BANCA TRANSILVANIA': 'Banca Transilvania', 'LIBRA INTERNET BANK': 'Libra Bank' };
+    return M[b] || b;
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#D8C07A';
+    const s = this.state;
+    const d = s.d;
+    const yearOpts = [{ v: 'all', l: 'Toți anii' }].concat((d ? d.years.map((y) => y.y).reverse() : []).map((y) => ({ v: String(y), l: String(y) })));
+    const base = { year: s.year, yearOpts, onYear: (e) => this.setState({ year: e.target.value }) };
+    if (!d) return { ...base, periodLabel: 'Se încarcă…', periodShort: '', kpis: [], vol: [], conv: [], banks: [], outcomes: [], mixes: [] };
+    const all = s.year === 'all';
+    const yr = all ? null : d.years.find((y) => String(y.y) === s.year);
+    const P = all ? { dep: d.tot.dosare, trase: d.tot.trase, sum: d.tot.sum, conv: d.tot.conv } : yr;
+    const pc = (v) => (v === null || v === undefined ? '—' : v.toLocaleString('ro-RO', { maximumFractionDigits: 1 }) + '%');
+    const kpis = [
+      { l: 'Dosare depuse', v: this.fmt(P.dep), s: all ? this.fmt(d.tot.clienti) + ' clienți' : 'depuse în ' + s.year },
+      { l: 'Credite trase', v: this.fmt(P.trase), s: all ? 'din ' + d.years[0].y + ' până azi' : 'trase în ' + s.year },
+      { l: 'Volum tras', v: this.mil(P.sum) + ' mil.', s: 'lei' },
+      { l: 'Rată de reușită', v: pc(P.conv), s: 'din dosarele închise' },
+      { l: 'Credit mediu', v: P.trase ? this.fmt(P.sum / P.trase) : '—', s: 'lei pe credit tras' }
+    ];
+    const mx = Math.max.apply(null, d.years.map((y) => y.sum)) || 1;
+    const lab = (on) => 'font-size:12px;padding:2px 8px;border-radius:999px;' + (on ? 'background:#0B0F1A;color:#FFFFFF;font-weight:700' : 'color:#5B6472');
+    const vol = d.years.map((y) => {
+      const on = String(y.y) === s.year;
+      return {
+        y: y.y, v: this.mil(y.sum), pressed: on ? 'true' : 'false', aria: 'Anul ' + y.y + ', ' + this.mil(y.sum) + ' milioane lei',
+        bar: 'display:block;width:100%;max-width:56px;border-radius:10px 10px 4px 4px;height:' + Math.round(y.sum / mx * 150) + 'px;' + (on ? 'background:' + accent + ';border:1px solid #0B0F1A;box-sizing:border-box' : 'background:#0B0F1A'),
+        lab: lab(on),
+        pick: () => this.setState({ year: on ? 'all' : String(y.y) })
+      };
+    });
+    const conv = d.years.map((y) => {
+      const on = String(y.y) === s.year;
+      return { y: y.y, v: pc(y.conv), bar: 'display:block;width:100%;max-width:56px;border-radius:10px 10px 4px 4px;height:' + Math.round(y.conv / 100 * 190) + 'px;' + (on ? 'background:' + accent + ';border:1px solid #0B0F1A;box-sizing:border-box' : 'background:#AEB5C0'), lab: lab(on) };
+    });
+    const bl = (d.banks[s.year] || []).filter((b) => b.dep > 0);
+    const bmx = bl.length ? Math.max.apply(null, bl.map((b) => b.sum)) || 1 : 1;
+    const banks = bl.map((b) => ({
+      l: this.bk(b.b), dep: this.fmt(b.dep), trase: this.fmt(b.trase), sum: this.mil(b.sum) + ' mil.',
+      bar: 'height:100%;border-radius:999px;background:#0B0F1A;width:' + Math.round(b.sum / bmx * 100) + '%',
+      conv: pc(b.conv),
+      convStyle: 'display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;' + (b.conv === null ? 'background:#EEF0F3;color:#3D4653' : (b.conv >= 55 ? 'background:#E6F4EE;color:#0B5940' : (b.conv >= 45 ? 'background:#FDF6E3;color:#7A4E0A' : 'background:#FFF1E8;color:#9A3412'))),
+      days: b.days === null ? '—' : b.days
+    }));
+    const OUT = { 'Dosar Reconciliat': ['Tras și reconciliat', '#0B6B4A'], 'Respins client': ['Clientul a renunțat', '#5B6472'], 'Dosar respins banca': ['Respins de bancă', '#C2410C'], 'Nou': ['Nou, în lucru', '#2F6FED'], 'Respins Kiwi': ['Respins Kiwi', '#8A93A1'] };
+    const total = d.status.reduce((a, x) => a + x.n, 0);
+    const outcomes = d.status.filter((x) => OUT[x.l]).map((x) => ({ l: OUT[x.l][0], n: this.fmt(x.n), p: pc(x.n / total * 100), bar: 'height:100%;border-radius:999px;width:' + Math.max(1, Math.round(x.n / d.status[0].n * 100)) + '%;background:' + OUT[x.l][1] }));
+    const RO = { 'Credit cu ipoteca': 'Credit cu ipotecă', 'Noua Casa': 'Noua Casă', 'Mixta': 'Mixtă', 'Fixa': 'Fixă', 'Variabila': 'Variabilă', 'Refinantare': 'Refinanțare', 'Refinantare cu suplimentare': 'Refinanțare cu suplimentare', 'Nou': 'Credit nou' };
+    const SH = ['#0B0F1A', '#5B6472', '#AEB5C0', '#DDE1E7'];
+    const mix = (l, arr) => {
+      const t = arr.reduce((a, x) => a + x.n, 0);
+      return { l, seg: arr.map((x, i) => ({ l: RO[x.l] || x.l, p: pc(x.n / t * 100), bar: 'display:block;height:100%;flex:' + x.n + ' 1 0;background:' + SH[i % 4], dot: 'display:inline-block;width:10px;height:10px;border-radius:3px;border:1px solid #0B0F1A;box-sizing:border-box;background:' + SH[i % 4] })) };
+    };
+    return {
+      ...base,
+      periodLabel: (all ? 'Toată perioada, ' + d.years[0].y + '–' + d.year : 'Anul ' + s.year) + ' · date eKIWI la ' + d.asOf,
+      periodShort: all ? 'toată perioada' : s.year,
+      kpis, vol, conv, banks, outcomes,
+      mixes: [mix('Tip credit', d.types), mix('Tip dobândă', d.rates), mix('Tip finanțare', d.fin)]
+    };
+  }
+}
+</script>

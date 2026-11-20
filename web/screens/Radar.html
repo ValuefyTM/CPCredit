@@ -1,0 +1,578 @@
+<!-- title: Radar refinanțare -->
+<style>
+.in{height:44px;box-sizing:border-box;padding:0 12px;border:1px solid #D3D8E0;border-radius:12px;font:inherit;background:#FFFFFF;color:#10151C}
+.th{padding:10px 12px;font-weight:600;font-size:12px;color:#5B6472;text-align:left;white-space:nowrap}
+.td{padding:12px;border-top:1px solid #EEF0F3}
+.tn{padding:9px 12px;border-top:1px solid #EEF0F3;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rw:hover{background:#F7F8FA}
+.nm{all:unset;cursor:pointer;font-weight:600}
+.nm:hover{text-decoration:underline}
+</style>
+
+<template>
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px">
+
+<sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+<header style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Radar refinanțare</h1>
+<div style="color: #5B6472">{{totalLabel}}</div>
+</header>
+</sc-if>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+<div><button class="bt fx" onClick="{{close}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Înapoi la radar</button></div>
+<section class="cd" style="padding: 24px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; background: #0B0F1A; border-color: #0B0F1A; color: #FFFFFF">
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<span style="{{sel.pillStyle}}">{{sel.catLabel}}</span>
+<h1 class="hd" style="margin: 0; font-size: 32px; font-weight: 700; line-height: 1.15">{{sel.n}}</h1>
+<div style="font-size: 14px; color: #B6BDC8; line-height: 1.45">Dosar #{{sel.id}} · {{sel.bank}} · tras {{sel.dt}} · {{sel.sf}} lei · {{sel.dob}}</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<a class="bt fx" href="{{sel.tel}}" style="background: #D8C07A; color: #0B0F1A">Sună {{sel.t}}</a>
+<sc-if value="{{sel.hasTel}}" hint-placeholder-val="{{ true }}">
+<a class="bt fx" href="{{sel.wa}}" target="_blank" rel="noopener" style="background: #0B6B4A; color: #FFFFFF"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.3 7.4L3 21l2.1-5.7A8.4 8.4 0 1 1 21 11.5z"/></svg>WhatsApp</a>
+</sc-if>
+<sc-if value="{{sel.hasEmail}}" hint-placeholder-val="{{ true }}">
+<a class="bt fx" href="{{sel.mail}}" style="border: 1px solid #3A4352; color: #FFFFFF">Email</a>
+</sc-if>
+</div>
+</section>
+</sc-if>
+
+<section class="cd" aria-labelledby="r-set" style="padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between">
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+<h2 id="r-set" class="hd" style="margin: 0 6px 0 0; font-size: 16px; font-weight: 700">Ipoteze de calcul</h2>
+<sc-for list="{{chips}}" as="ch" hint-placeholder-count="4">
+<span style="font-size: 13px; padding: 5px 11px; border-radius: 999px; background: #F2F4F7">{{ch.l}} <strong>{{ch.v}}</strong></span>
+</sc-for>
+</div>
+<button class="bt fx" onClick="{{toggleSet}}" aria-expanded="{{setExp}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">{{setLabel}}</button>
+</div>
+<sc-if value="{{setOpen}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #EEF0F3; padding-top: 14px">
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="11">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<label for="{{f.id}}" style="font-size: 12px; font-weight: 600">{{f.l}}</label>
+<div style="display: flex; align-items: center; gap: 6px; height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid #D3D8E0; border-radius: 12px; background: #FFFFFF">
+<input id="{{f.id}}" class="fx" inputmode="decimal" value="{{f.v}}" onChange="{{f.set}}" style="all: unset; flex: 1 1 auto; min-width: 0; font-weight: 600; font-variant-numeric: tabular-nums">
+<span style="font-size: 12px; color: #5B6472">{{f.u}}</span>
+</div>
+<span style="font-size: 11px; color: #5B6472">{{f.h}}</span>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5B6472; line-height: 1.5">Soldul se estimează din suma trasă, data tragerii și durata inițială, cu rate egale. Rata nouă se calculează pe aceeași durată rămasă. Costurile sunt orientative, completează-le cu tarifele tale.</div>
+</div>
+</sc-if>
+</section>
+
+<sc-if value="{{isList}}" hint-placeholder-val="{{ true }}">
+<section aria-label="Categorii" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px">
+<sc-for list="{{cards}}" as="card" hint-placeholder-count="4">
+<button class="fx" onClick="{{card.pick}}" aria-pressed="{{card.pressed}}" style="{{card.style}}">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600"><span style="{{card.dot}}"></span>{{card.label}}</span>
+<span style="display: flex; align-items: baseline; gap: 8px"><span class="hd" style="font-size: 38px; font-weight: 700; line-height: 1.1">{{card.count}}</span><span style="font-size: 13px; opacity: 0.78">clienți · {{card.sum}} lei</span></span>
+<span style="{{card.saveStyle}}">{{card.save}} lei/lună economie totală</span>
+</button>
+</sc-for>
+</section>
+
+<section class="cd" aria-label="Listă clienți" style="min-width: 0; display: flex; flex-direction: column">
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 16px 18px">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h2 class="hd" style="margin: 0; font-size: 18px; font-weight: 700">{{listTitle}}</h2>
+<div style="font-size: 12px; color: #5B6472">{{shownLabel}}</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<label for="r-q" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Caută client</label>
+<input id="r-q" class="in fx" type="search" placeholder="Caută nume sau telefon" value="{{q}}" onChange="{{onQ}}" style="width: 190px">
+<label for="r-b" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Bancă</label>
+<select id="r-b" class="in fx" value="{{bank}}" onChange="{{onBank}}">
+<sc-for list="{{banks}}" as="bk" hint-placeholder-count="5">
+<option value="{{bk.v}}">{{bk.l}}</option>
+</sc-for>
+</select>
+<label for="r-s" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Sortare</label>
+<select id="r-s" class="in fx" value="{{sort}}" onChange="{{onSort}}">
+<option value="date">Sortare: dată</option>
+<option value="save">Sortare: economie pe lună</option>
+<option value="net">Sortare: câștig net</option>
+</select>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 860px">
+<thead><tr style="background: #F7F8FA">
+<th scope="col" class="th" style="padding-left: 18px">Client</th>
+<th scope="col" class="th">Final perioadă fixă</th>
+<th scope="col" class="th" style="text-align: right">Sold estimat</th>
+<th scope="col" class="th" style="text-align: right">Cost lunar actual → nou</th>
+<th scope="col" class="th" style="text-align: right">Economie pe lună</th>
+<th scope="col" class="th" style="text-align: right">Recuperare costuri</th>
+<th scope="col" class="th">Stadiu</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{visible}}" as="row" hint-placeholder-count="8">
+<tr class="rw" onClick="{{row.pick}}" style="cursor: pointer">
+<td class="td" style="padding-left: 18px"><button class="nm fx">{{row.n}}</button><div style="font-size: 12px; color: #5B6472; margin-top: 2px">{{row.sub}}</div></td>
+<td class="td"><span style="{{row.pillStyle}}">{{row.when}}</span></td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums">{{row.balF}}</td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap">{{row.payF}}</td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; {{row.saveStyle}}">{{row.saveF}}</td>
+<td class="td" style="text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap">{{row.beF}}</td>
+<td class="td" style="font-size: 12px">{{row.status}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 36px 18px; text-align: center; color: #5B6472">{{emptyText}}</div>
+</sc-if>
+<sc-if value="{{hasMore}}" hint-placeholder-val="{{ true }}">
+<div style="padding: 14px 18px; border-top: 1px solid #EEF0F3"><button class="bt fx" onClick="{{more}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">Arată mai mulți</button></div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ false }}">
+<div role="tablist" aria-label="Secțiuni" style="display: inline-flex; align-self: flex-start; gap: 4px; padding: 4px; border-radius: 14px; background: #E4E7EC">
+<sc-for list="{{tabs}}" as="tb" hint-placeholder-count="2">
+<button class="fx" role="tab" aria-selected="{{tb.sel}}" onClick="{{tb.pick}}" style="{{tb.style}}">{{tb.l}}</button>
+</sc-for>
+</div>
+
+<sc-if value="{{tabCalc}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+<section class="cd" aria-labelledby="c-cur" style="flex: 3 1 460px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="c-cur" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Creditul actual</h2>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 10px">
+<sc-for list="{{ovFields}}" as="f" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<label for="{{f.id}}" style="font-size: 12px; font-weight: 600">{{f.l}}</label>
+<input id="{{f.id}}" class="in fx" inputmode="decimal" placeholder="{{f.ph}}" value="{{f.v}}" onChange="{{f.set}}" style="width: 100%; font-variant-numeric: tabular-nums">
+<span style="font-size: 11px; color: #5B6472">{{f.h}}</span>
+</div>
+</sc-for>
+</div>
+<div style="font-size: 12px; color: #5B6472">Câmp gol = valoarea estimată, afișată în câmp cu gri. Completează cu datele reale din extrasul clientului.</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; border-top: 1px solid #EEF0F3; padding-top: 14px">
+<span id="c-scen" style="font-size: 13px; font-weight: 700">Ce vrea clientul</span>
+<div role="group" aria-labelledby="c-scen" style="display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: 14px; background: #E4E7EC">
+<sc-for list="{{scens}}" as="sc" hint-placeholder-count="2">
+<button class="fx" onClick="{{sc.pick}}" aria-pressed="{{sc.pressed}}" style="{{sc.style}}">{{sc.l}}</button>
+</sc-for>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
+<div style="background: #F2F4F7; border-radius: 14px; padding: 14px 16px">
+<div style="font-size: 12px; color: #5B6472">{{sel.curLabel}}</div>
+<div class="hd" style="font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums">{{sel.curCostF}}</div>
+<div style="font-size: 12px; color: #5B6472; line-height: 1.45">{{sel.curRateF}}</div>
+</div>
+<div style="background: #F2F4F7; border-radius: 14px; padding: 14px 16px">
+<div style="font-size: 12px; color: #5B6472">{{sel.newLabel}}</div>
+<div class="hd" style="font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums">{{sel.newCostF}}</div>
+<div style="font-size: 12px; color: #5B6472; line-height: 1.45">{{sel.newRateF}}</div>
+</div>
+<div style="{{sel.saveBox}}">
+<div style="font-size: 12px; font-weight: 600">{{sel.saveLabel}}</div>
+<div class="hd" style="font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums">{{sel.saveF}}</div>
+<div style="font-size: 12px; line-height: 1.45">{{sel.saveTotF}}</div>
+</div>
+</div>
+</section>
+
+<section class="cd" aria-labelledby="c-cost" style="flex: 2 1 340px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 14px">
+<h2 id="c-cost" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Costuri de refinanțare</h2>
+<dl style="margin: 0; display: flex; flex-direction: column; gap: 8px">
+<sc-for list="{{sel.costLines}}" as="cl" hint-placeholder-count="5">
+<div style="display: flex; justify-content: space-between; gap: 12px"><dt style="color: #5B6472">{{cl.l}}</dt><dd style="margin: 0; font-variant-numeric: tabular-nums">{{cl.v}}</dd></div>
+</sc-for>
+<div style="display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #E4E7EC; padding-top: 8px; font-weight: 700"><dt>Total costuri</dt><dd style="margin: 0; font-variant-numeric: tabular-nums">{{sel.costF}}</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><dt style="color: #5B6472">Recuperează costurile în</dt><dd style="margin: 0; font-weight: 600">{{sel.beF}}</dd></div>
+<div style="display: flex; justify-content: space-between; gap: 12px"><dt style="color: #5B6472">Câștig net până la finalul creditului</dt><dd style="margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; {{sel.netStyle}}">{{sel.netF}}</dd></div>
+</dl>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch">
+<section class="cd" aria-labelledby="c-msg" style="flex: 3 1 460px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+<h2 id="c-msg" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Mesaj pregătit</h2>
+<button class="bt fx" onClick="{{copy}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">{{copyLabel}}</button>
+</div>
+<div style="white-space: pre-line; background: #F2F4F7; border-radius: 14px; padding: 14px 16px; line-height: 1.55">{{sel.msg}}</div>
+</section>
+<section class="cd" aria-labelledby="c-st" style="flex: 2 1 340px; min-width: 0; padding: 20px 22px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="c-st" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Stadiu discuție</h2>
+<div role="group" aria-labelledby="c-st" style="display: flex; flex-wrap: wrap; gap: 6px">
+<sc-for list="{{statusOpts}}" as="so" hint-placeholder-count="5">
+<button class="fx" onClick="{{so.pick}}" aria-pressed="{{so.pressed}}" style="{{so.style}}">{{so.l}}</button>
+</sc-for>
+</div>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{tabSched}}" hint-placeholder-val="{{ false }}">
+<section class="cd" aria-labelledby="c-sch" style="min-width: 0; display: flex; flex-direction: column">
+<div style="padding: 20px 22px 14px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 id="c-sch" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Scadențar propus după refinanțare</h2>
+<div style="font-size: 13px; color: #5B6472">{{sch.sub}}</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px">
+<sc-for list="{{sch.kpis}}" as="k" hint-placeholder-count="5">
+<div style="background: #F2F4F7; border-radius: 14px; padding: 12px 14px">
+<div style="font-size: 12px; color: #5B6472">{{k.l}}</div>
+<div class="hd" style="font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums">{{k.v}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; min-width: 820px">
+<thead><tr style="background: #F7F8FA">
+<th scope="col" class="th" style="padding-left: 22px">Nr.</th>
+<th scope="col" class="th">Scadență</th>
+<th scope="col" class="th" style="text-align: right">Principal</th>
+<th scope="col" class="th" style="text-align: right">Dobândă</th>
+<th scope="col" class="th" style="text-align: right">Rată</th>
+<th scope="col" class="th" style="text-align: right">Comisioane</th>
+<th scope="col" class="th" style="text-align: right">Total de plată</th>
+<th scope="col" class="th" style="text-align: right; padding-right: 22px">Sold rămas</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{sch.rows}}" as="r" hint-placeholder-count="12">
+<tr class="rw">
+<td class="tn" style="text-align: left; padding-left: 22px; color: #5B6472">{{r.k}}</td>
+<td class="tn" style="text-align: left">{{r.d}}</td>
+<td class="tn">{{r.p}}</td>
+<td class="tn">{{r.i}}</td>
+<td class="tn">{{r.pay}}</td>
+<td class="tn">{{r.fee}}</td>
+<td class="tn" style="font-weight: 700">{{r.tot}}</td>
+<td class="tn" style="padding-right: 22px">{{r.bal}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; padding: 14px 22px; border-top: 1px solid #EEF0F3; font-size: 13px; color: #5B6472">
+<span>{{sch.shown}}</span>
+<sc-if value="{{sch.hasMore}}" hint-placeholder-val="{{ true }}">
+<button class="bt fx" onClick="{{sch.toggle}}" style="border: 1px solid #D3D8E0; background: #FFFFFF; color: #10151C">{{sch.toggleL}}</button>
+</sc-if>
+</div>
+</section>
+<div style="font-size: 12px; color: #5B6472; line-height: 1.5">Scadențarul este orientativ: rate egale, dobândă constantă pe toată durata, pornind de la soldul și lunile rămase din tabul Calcul. Scadențarul real îl emite banca.</div>
+</sc-if>
+</sc-if>
+</main>
+</template>
+
+<script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.state = {
+      rows: null, cat: 'urgent', q: '', bank: '', sort: 'date', limit: 0, selId: null, tab: 'calc', schAll: false, statuses: {}, copied: false, setOpen: false, ov: {}, scen: {},
+      set: { newRate: '5,20', newFee: '0', ircc: '5,57', margin: '2,75', origRate: '6,00', term: '30', eval: '600', notary: '1500', ancpi: '0,15', bankFee: '0', rac: '0' }
+    };
+  }
+  componentDidMount() {
+    DATA.load('radar').then((rows) => this.setState({ rows })).catch(() => this.setState({ rows: [] }));
+  }
+  open(id) {
+    this.setState({ selId: id, tab: 'calc', schAll: false, copied: false });
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  num(v, d) {
+    if (v === undefined || v === null || v === '') return d;
+    let s = String(v).replace(/\s/g, '');
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(s);
+    return isFinite(n) ? n : d;
+  }
+  fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
+  mil(n) { return (n / 1e6).toLocaleString('ro-RO', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' mil.'; }
+  pct(n) { return n.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'; }
+  bk(b) {
+    const M = { 'UNICREDIT BANK': 'UniCredit', 'OTP BANK ROMANIA': 'OTP Bank', 'ALPHA BANK': 'Alpha Bank', 'GARANTI BANK': 'Garanti BBVA', 'SALT BANK': 'Salt Bank', 'INTESA SANPAOLO': 'Intesa Sanpaolo', 'RAIFFEISEN BANK': 'Raiffeisen', 'ING BANK': 'ING', 'BANCA TRANSILVANIA': 'Banca Transilvania', 'LIBRA INTERNET BANK': 'Libra Bank' };
+    return M[b] || b;
+  }
+  first(name) { const p = name.split(' '); return p.length > 1 ? p[1].split('-')[0] : p[0]; }
+  nr(n, one, many) { return n === 1 ? one : n + (n >= 20 && (n % 100 === 0 || n % 100 >= 20) ? ' de ' : ' ') + many; }
+  dur(m) {
+    const y = Math.floor(m / 12), r = m % 12;
+    const a = y ? this.nr(y, 'un an', 'ani') : '', b = r ? this.nr(r, 'o lună', 'luni') : '';
+    return a && b ? a + ' și ' + b : (a || b || '0 luni');
+  }
+  pay(B, rate, m) {
+    if (m <= 0) return 0;
+    const i = rate / 1200;
+    return i === 0 ? B / m : B * i / (1 - Math.pow(1 + i, -m));
+  }
+  monthsSince(dt) {
+    const p = dt.split('.');
+    const now = new Date();
+    return Math.max(0, (now.getFullYear() - +p[2]) * 12 + (now.getMonth() - (+p[1] - 1)));
+  }
+  calc(r, S, ov) {
+    ov = ov || {};
+    const n = Math.max(12, Math.round(S.term * 12));
+    const k = this.monthsSince(r.dt);
+    const orig = r.r > 0 ? r.r : S.origRate;
+    const i = orig / 1200;
+    const P = this.pay(r.s, orig, n);
+    const estBal = Math.max(0, i === 0 ? r.s * (1 - k / n) : r.s * Math.pow(1 + i, k) - P * (Math.pow(1 + i, k) - 1) / i);
+    const estRem = Math.max(1, n - k);
+    const balance = this.num(ov.bal, estBal);
+    const rem = Math.max(1, Math.round(this.num(ov.rem, estRem)));
+    const estCur = S.ircc + S.margin;
+    const curRate = this.num(ov.rate, estCur);
+    const curFee = Math.max(0, this.num(ov.fee, 0));
+    const curPay = this.pay(balance, curRate, rem);
+    const newPay = this.pay(balance, S.newRate, rem);
+    const curCost = curPay + curFee;
+    const newCost = newPay + S.newFee;
+    const save = curCost - newCost;
+    const costs = [
+      { l: 'Evaluare imobil', v: S.eval },
+      { l: 'Notar (contract și ipotecă)', v: S.notary },
+      { l: 'Intabulare ipotecă ANCPI (' + this.pct(S.ancpi) + ')', v: balance * S.ancpi / 100 },
+      { l: 'Comision analiză bancă nouă', v: S.bankFee },
+      { l: 'Rambursare anticipată (' + this.pct(S.rac) + ')', v: balance * S.rac / 100 }
+    ];
+    const cost = costs.reduce((a, c) => a + c.v, 0);
+    return { balance, estBal, rem, estRem, curRate, estCur, curFee, curPay, newPay, curCost, newCost, save, costs, cost, be: save > 0 ? Math.ceil(cost / save) : null, net: save * rem - cost };
+  }
+  renderVals() {
+    const pageSize = this.props.pageSize ?? 15;
+    const s = this.state;
+    const rows = s.rows || [];
+    const defs = { newRate: 5.2, newFee: 0, ircc: 5.57, margin: 2.75, origRate: 6, term: 30, eval: 600, notary: 1500, ancpi: 0.15, bankFee: 0, rac: 0 };
+    const S = {};
+    Object.keys(defs).forEach((key) => { S[key] = this.num(s.set[key], defs[key]); });
+    const FIELDS = [
+      ['newRate', 'Cea mai bună dobândă nouă', '%', 'oferta pe care o propui'],
+      ['newFee', 'Comisioane lunare ofertă nouă', 'lei', 'asigurare, administrare etc.'],
+      ['ircc', 'IRCC în vigoare', '%', 'publicat trimestrial de BNR'],
+      ['margin', 'Marjă medie credite vechi', '%', 'dobânda actuală = IRCC + marjă'],
+      ['origRate', 'Dobândă la acordare', '%', 'doar unde lipsește în eKIWI'],
+      ['term', 'Durată inițială credit', 'ani', 'pentru estimarea soldului'],
+      ['eval', 'Evaluare imobil', 'lei', 'raport pentru banca nouă'],
+      ['notary', 'Notar', 'lei', 'contract de credit și ipotecă'],
+      ['ancpi', 'Intabulare ANCPI', '% sold', 'înscrierea ipotecii'],
+      ['bankFee', 'Comision analiză', 'lei', 'la banca nouă'],
+      ['rac', 'Rambursare anticipată', '% sold', '0% la dobândă variabilă']
+    ];
+    const fields = FIELDS.map((f) => ({ id: 'r-f-' + f[0], l: f[1], u: f[2], h: f[3], v: s.set[f[0]], set: (e) => this.setState({ set: { ...this.state.set, [f[0]]: e.target.value } }) }));
+    const chips = [
+      { l: 'Ofertă nouă', v: this.pct(S.newRate) + (S.newFee > 0 ? ' + ' + this.fmt(S.newFee) + ' lei/lună' : '') },
+      { l: 'Dobândă actuală estimată', v: this.pct(S.ircc + S.margin) },
+      { l: 'Costuri fixe', v: this.fmt(S.eval + S.notary + S.bankFee) + ' lei' },
+      { l: 'ANCPI', v: this.pct(S.ancpi) }
+    ];
+    const CATS = [
+      { k: 'urgent', label: 'Fixa expiră în ≤ 90 zile', color: '#FF8A4C', bg: '#FFF1E8', fg: '#9A3412' },
+      { k: 'curand', label: 'Fixa expiră în 3–12 luni', color: '#E0A82E', bg: '#FDF6E3', fg: '#7A4E0A' },
+      { k: 'expirata', label: 'Fixa deja expirată', color: '#5B8DEF', bg: '#EAF0FD', fg: '#1A3FA6' },
+      { k: 'variabila', label: 'Dobândă variabilă (din 2021)', color: '#8A93A1', bg: '#EEF0F3', fg: '#3D4653' }
+    ];
+    const catMap = {}; CATS.forEach((c) => { catMap[c.k] = c; });
+    const calcs = {};
+    rows.forEach((r) => { calcs[r.id] = this.calc(r, S, s.ov[r.id]); });
+    const selRow = rows.find((r) => r.id === s.selId);
+    const STATUS = [{ k: '', l: 'De contactat' }, { k: 'sunat', l: 'Sunat, revin' }, { k: 'intalnire', l: 'Întâlnire programată' }, { k: 'dosar', l: 'Dosar depus' }, { k: 'refuz', l: 'Nu e interesat' }];
+    const stLabel = (id) => (STATUS.find((x) => x.k === (s.statuses[id] || '')) || STATUS[0]).l;
+    const dob = (r) => r.td === 'Mixta' ? 'mixtă, ' + r.af + ' ani fix' : (r.td === 'Fixa' ? 'fixă ' + r.af + ' ani' : (r.td === 'Variabila' ? 'variabilă' : (r.af ? r.af + ' ani fix' : 'tip dobândă nenotat')));
+    const when = (r) => r.c === 'variabila' ? 'Variabilă' : (r.c === 'expirata' ? 'Expirată ' + r.ex : r.ex + ' · ' + r.z + ' zile');
+    const pill = (c) => 'display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;background:' + c.bg + ';color:' + c.fg;
+    const col = (v) => 'color:' + (v > 0 ? '#0B6B4A' : '#9A3412');
+    const beText = (c) => c.be === null ? 'nu se recuperează' : (c.be > c.rem ? 'peste durată' : this.nr(c.be, 'o lună', 'luni'));
+
+    // list view
+    let cards = [], visible = [], filtered = [], bankSet = [];
+    const limit = s.limit || pageSize;
+    if (!selRow) {
+      cards = CATS.map((c) => {
+        const list = rows.filter((r) => r.c === c.k);
+        const on = s.cat === c.k;
+        return {
+          label: c.label, count: s.rows ? list.length : '—',
+          sum: s.rows ? this.mil(list.reduce((a, r) => a + r.s, 0)) : '—',
+          save: s.rows ? this.fmt(list.reduce((a, r) => a + Math.max(0, calcs[r.id].save), 0)) : '—',
+          pressed: on ? 'true' : 'false',
+          dot: 'display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c.color,
+          saveStyle: 'font-size:13px;font-weight:600;color:' + (on ? '#D8C07A' : '#0B6B4A'),
+          style: 'all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:8px;padding:18px 20px;border-radius:18px;' + (on ? 'background:#0B0F1A;color:#FFFFFF;border:1px solid #0B0F1A' : 'background:#FFFFFF;color:#10151C;border:1px solid #E4E7EC'),
+          pick: () => this.setState({ cat: c.k, limit: 0 })
+        };
+      });
+      bankSet = Array.from(new Set(rows.map((r) => r.b))).sort();
+      const q = s.q.trim().toLowerCase();
+      const qd = q.replace(/\s/g, '');
+      filtered = rows.filter((r) => r.c === s.cat && (!s.bank || r.b === s.bank) && (!q || r.n.toLowerCase().includes(q) || (qd && /^\d+$/.test(qd) && r.t.replace(/\s/g, '').includes(qd))));
+      if (s.sort === 'save') filtered = filtered.slice().sort((a, b) => calcs[b.id].save - calcs[a.id].save);
+      if (s.sort === 'net') filtered = filtered.slice().sort((a, b) => calcs[b.id].net - calcs[a.id].net);
+      visible = filtered.slice(0, limit).map((r) => {
+        const c = calcs[r.id];
+        return {
+          n: r.n, sub: this.bk(r.b) + ' · ' + (r.t || 'fără telefon'),
+          balF: this.fmt(c.balance), payF: this.fmt(c.curCost) + ' → ' + this.fmt(c.newCost),
+          saveF: (c.save > 0 ? '+' : '') + this.fmt(c.save) + ' lei', saveStyle: col(c.save), beF: beText(c),
+          when: when(r), pillStyle: pill(catMap[r.c]), status: stLabel(r.id),
+          pick: () => this.open(r.id)
+        };
+      });
+    }
+
+    // detail view
+    let sel = {}, ovFields = [], sch = { kpis: [], rows: [] };
+    if (selRow) {
+      const c = catMap[selRow.c];
+      const k = calcs[selRow.id];
+      const ov = s.ov[selRow.id] || {};
+      const setOv = (key) => (e) => this.setState({ ov: { ...this.state.ov, [selRow.id]: { ...(this.state.ov[selRow.id] || {}), [key]: e.target.value } } });
+      ovFields = [
+        { id: 'r-o-rate', l: 'Dobândă actuală %', ph: this.pct(k.estCur).replace('%', ''), h: 'estimată: IRCC + marjă', v: ov.rate || '', set: setOv('rate') },
+        { id: 'r-o-bal', l: 'Sold actual lei', ph: this.fmt(k.estBal), h: 'estimat din suma trasă', v: ov.bal || '', set: setOv('bal') },
+        { id: 'r-o-rem', l: 'Luni rămase', ph: String(k.estRem), h: 'estimat la ' + S.term + ' ani', v: ov.rem || '', set: setOv('rem') },
+        { id: 'r-o-fee', l: 'Comisioane lunare lei', ph: '0', h: 'asigurare, administrare etc., cumulat', v: ov.fee || '', set: setOv('fee') }
+      ];
+      const fn = this.first(selRow.n);
+      const bank = this.bk(selRow.b);
+      const pending = selRow.c === 'urgent' || selRow.c === 'curand';
+      const keep = (s.scen[selRow.id] || 'rate') === 'keep';
+      const iN = S.newRate / 1200;
+      const keepPay = Math.max(0, k.curCost - S.newFee);
+      let n2 = null, paidNew = 0;
+      if (keep && keepPay > k.balance * iN) {
+        n2 = iN === 0 ? Math.ceil(k.balance / keepPay) : Math.ceil(-Math.log(1 - k.balance * iN / keepPay) / Math.log(1 + iN));
+        let Bk = k.balance;
+        for (let m = 1; m <= n2; m++) { const it = Bk * iN; const pr = Math.min(Bk, keepPay - it); Bk -= pr; paidNew += pr + it + S.newFee; }
+      }
+      const cut = n2 ? k.rem - n2 : null;
+      const totSave = keep ? (n2 ? k.curCost * k.rem - paidNew : null) : k.save * k.rem;
+      const net = totSave === null ? null : totSave - k.cost;
+      const good = keep ? (cut !== null && cut > 0) : k.save > 0;
+      const offer = 'Am acum o ofertă cu dobândă de ' + this.pct(S.newRate) + '.';
+      const mid = keep
+        ? ((cut > 0 ? 'Din calculul meu, dacă păstrezi aceeași rată ca acum, ai putea termina creditul cu ' + this.dur(cut) + ' mai devreme. ' : '') + offer).trim()
+        : ((k.save > 0 ? 'Din calculul meu, ai putea plăti cu aproximativ ' + this.fmt(k.save) + ' lei mai puțin pe lună. ' : '') + offer).trim();
+      const intro = pending
+        ? 'Te caut în legătură cu creditul ipotecar de la ' + bank + ', pe care l-am făcut împreună în ' + selRow.dt.slice(3) + '. Pe ' + selRow.ex + ' se încheie perioada de dobândă fixă, iar rata poate crește după această dată.'
+        : (selRow.c === 'expirata'
+          ? 'Perioada de dobândă fixă la creditul tău de la ' + bank + ' s-a încheiat pe ' + selRow.ex + ', așa că probabil plătești acum dobânda variabilă.'
+          : 'Creditul tău de la ' + bank + ', tras în ' + selRow.dt.slice(3) + ', are dobândă variabilă. Între timp, băncile au oferte cu dobândă fixă pe mai mulți ani, care îți pot da o rată stabilă.');
+      const msg = 'Salut ' + fn + ', ' + (this.props.expeditor ?? 'Cristi Popescu de la Kiwi') + ' aici!\n\n' + intro + '\n\n' + mid + '\n\nCând te pot suna 5 minute să-ți arăt calculul?';
+      const digits = (selRow.t || '').replace(/\D/g, '');
+      const feeTxt = (v) => (v > 0 ? ' + ' + this.fmt(v) + ' lei comisioane' : '');
+      sel = {
+        id: selRow.id, n: selRow.n, bank, dt: selRow.dt, sf: this.fmt(selRow.s), dob: dob(selRow),
+        t: selRow.t || '', tel: selRow.t ? 'tel:' + selRow.t.replace(/\s/g, '') : '#',
+        hasTel: digits.length >= 9,
+        wa: 'https://wa.me/' + (digits.charAt(0) === '0' ? '40' + digits.slice(1) : digits) + '?text=' + encodeURIComponent(msg),
+        hasEmail: !!selRow.e,
+        mail: 'mailto:' + selRow.e + '?subject=' + encodeURIComponent('Creditul tău de la ' + bank) + '&body=' + encodeURIComponent(msg),
+        catLabel: c.label, pillStyle: pill(c) + ';align-self:flex-start',
+        curLabel: pending ? 'Cost lunar după expirarea fixei' : 'Cost lunar actual',
+        curCostF: this.fmt(k.curCost) + ' lei',
+        curRateF: 'rată ' + this.fmt(k.curPay) + ' lei' + feeTxt(k.curFee) + ' · ' + this.pct(k.curRate) + (ov.rate ? '' : ' estimat') + ' · ' + this.nr(k.rem, 'o lună', 'luni'),
+        newLabel: keep ? 'Durată după refinanțare' : 'Cost lunar după refinanțare',
+        newCostF: keep ? (n2 ? this.dur(n2) : 'rata nu acoperă dobânda') : this.fmt(k.newCost) + ' lei',
+        newRateF: keep
+          ? (n2 ? this.nr(n2, 'o rată', 'rate') + ' în loc de ' + k.rem + ' · rată păstrată ' + this.fmt(keepPay) + ' lei' + feeTxt(S.newFee) + ' · ' + this.pct(S.newRate) : 'la ' + this.pct(S.newRate) + ', rata actuală nu ajunge')
+          : 'rată ' + this.fmt(k.newPay) + ' lei' + feeTxt(S.newFee) + ' · ' + this.pct(S.newRate) + ' · aceeași durată',
+        saveLabel: keep ? (cut !== null && cut < 0 ? 'Perioadă mai lungă cu' : 'Perioadă mai scurtă cu') : 'Economie pe lună',
+        saveF: keep ? (cut === null ? '—' : this.dur(Math.abs(cut))) : (k.save > 0 ? '+' : '') + this.fmt(k.save) + ' lei',
+        saveTotF: totSave === null ? 'nu se poate calcula' : this.fmt(totSave) + ' lei economisiți în total, înainte de costuri',
+        saveBox: 'border-radius:14px;padding:14px 16px;' + (good ? 'background:#D8C07A;color:#0B0F1A' : 'background:#FFF1E8;color:#7C2D12'),
+        costLines: k.costs.map((x) => ({ l: x.l, v: this.fmt(x.v) + ' lei' })),
+        costF: this.fmt(k.cost) + ' lei',
+        beF: keep ? (good ? 'la final, prin ratele scutite' : 'nu se recuperează') : beText(k),
+        netF: net === null ? '—' : (net > 0 ? '+' : '') + this.fmt(net) + ' lei', netStyle: col(net || 0), msg
+      };
+      if (s.tab === 'sched') {
+        const MO = ['ian', 'feb', 'mar', 'apr', 'mai', 'iun', 'iul', 'aug', 'sep', 'oct', 'noi', 'dec'];
+        const now = new Date();
+        let start = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (pending && selRow.ex) {
+          const p = selRow.ex.split('.');
+          const ex = new Date(+p[2], +p[1] - 1, 1);
+          if (ex > start) start = ex;
+        }
+        const i = S.newRate / 1200;
+        let B = k.balance, totI = 0;
+        const all = [];
+        const useKeep = keep && !!n2;
+        const P = useKeep ? keepPay : k.newPay;
+        const N = useKeep ? n2 : k.rem;
+        for (let m = 1; m <= N; m++) {
+          const int = B * i;
+          let princ = P - int;
+          if (m === N || princ > B) princ = B;
+          B = Math.max(0, B - princ);
+          totI += int;
+          const d = new Date(start.getFullYear(), start.getMonth() + m, 1);
+          all.push({ k: m, d: MO[d.getMonth()] + ' ' + d.getFullYear(), p: this.fmt(princ), i: this.fmt(int), pay: this.fmt(princ + int), fee: S.newFee > 0 ? this.fmt(S.newFee) : '—', tot: this.fmt(princ + int + S.newFee), bal: this.fmt(B) });
+        }
+        const shownRows = s.schAll ? all : all.slice(0, 12);
+        sch = {
+          sub: (useKeep ? 'Scenariu: aceeași rată, perioadă mai scurtă · ' : 'Scenariu: rată mai mică, aceeași perioadă · ') + 'sold refinanțat ' + this.fmt(k.balance) + ' lei · dobândă ' + this.pct(S.newRate) + ' · ' + this.nr(N, 'o rată', 'rate') + ' · prima scadență ' + (all[0] ? all[0].d : '—'),
+          kpis: [
+            { l: useKeep ? 'Rată lunară păstrată' : 'Rată lunară', v: this.fmt(P) + ' lei' },
+            { l: 'Comisioane lunare', v: S.newFee > 0 ? this.fmt(S.newFee) + ' lei' : '0 lei' },
+            { l: 'Total dobânzi', v: this.fmt(totI) + ' lei' },
+            { l: 'Total de plată', v: this.fmt(k.balance + totI + S.newFee * N) + ' lei' },
+            { l: 'Durată', v: this.dur(N) }
+          ],
+          rows: shownRows,
+          shown: 'Afișez ' + shownRows.length + ' din ' + all.length + ' rate',
+          hasMore: all.length > 12,
+          toggleL: s.schAll ? 'Arată doar primul an' : 'Arată tot scadențarul',
+          toggle: () => this.setState({ schAll: !s.schAll })
+        };
+      }
+    }
+    const curSt = selRow ? (s.statuses[selRow.id] || '') : '';
+    const statusOpts = STATUS.map((o) => ({
+      l: o.l, pressed: curSt === o.k ? 'true' : 'false',
+      style: 'all:unset;box-sizing:border-box;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600;' + (curSt === o.k ? 'background:#0B0F1A;color:#FFFFFF' : 'background:#F2F4F7;color:#10151C'),
+      pick: () => selRow && this.setState({ statuses: { ...s.statuses, [selRow.id]: o.k } })
+    }));
+    const seg = (on) => 'all:unset;box-sizing:border-box;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;padding:0 16px;border-radius:10px;font-size:14px;font-weight:600;' + (on ? 'background:#0B0F1A;color:#FFFFFF' : 'color:#10151C');
+    const totalSave = rows.reduce((a, r) => a + Math.max(0, calcs[r.id].save), 0);
+    return {
+      isList: !selRow, hasSel: !!selRow,
+      totalLabel: s.rows ? rows.length + ' clienți cu motiv de refinanțare · economie potențială totală ' + this.fmt(totalSave) + ' lei pe lună · ultimul credit ipotecar al fiecărui client' : 'Se încarcă…',
+      chips, fields, setOpen: s.setOpen, setExp: s.setOpen ? 'true' : 'false', setLabel: s.setOpen ? 'Ascunde' : 'Modifică ipotezele',
+      toggleSet: () => this.setState({ setOpen: !s.setOpen }),
+      cards, q: s.q, bank: s.bank, sort: s.sort,
+      banks: [{ v: '', l: 'Toate băncile' }].concat(bankSet.map((b) => ({ v: b, l: this.bk(b) }))),
+      onQ: (e) => this.setState({ q: e.target.value, limit: 0 }),
+      onBank: (e) => this.setState({ bank: e.target.value, limit: 0 }),
+      onSort: (e) => this.setState({ sort: e.target.value, limit: 0 }),
+      listTitle: catMap[s.cat].label,
+      shownLabel: s.rows ? 'Afișez ' + visible.length + ' din ' + filtered.length : 'Se încarcă…',
+      visible, empty: !selRow && filtered.length === 0, emptyText: s.rows ? 'Niciun client nu corespunde filtrului.' : 'Se încarcă dosarele…',
+      hasMore: filtered.length > visible.length, more: () => this.setState({ limit: limit + pageSize }),
+      sel, ovFields, statusOpts, sch,
+      tabs: [['calc', 'Calcul'], ['sched', 'Scadențar propus']].map((t) => ({ l: t[1], sel: s.tab === t[0] ? 'true' : 'false', style: seg(s.tab === t[0]), pick: () => this.setState({ tab: t[0] }) })),
+      tabCalc: !!selRow && s.tab === 'calc', tabSched: !!selRow && s.tab === 'sched',
+      scens: [['rate', 'Rată mai mică, aceeași perioadă'], ['keep', 'Aceeași rată, perioadă mai scurtă']].map((t) => {
+        const on = !!selRow && (s.scen[selRow.id] || 'rate') === t[0];
+        return { l: t[1], pressed: on ? 'true' : 'false', style: seg(on), pick: () => selRow && this.setState({ scen: { ...s.scen, [selRow.id]: t[0] }, copied: false }) };
+      }),
+      close: () => this.setState({ selId: null }),
+      copyLabel: s.copied ? 'Copiat' : 'Copiază',
+      copy: () => { try { navigator.clipboard.writeText(sel.msg || ''); } catch (e) {} this.setState({ copied: true }); }
+    };
+  }
+}
+Component.persist = { set: 'radar.set', ov: 'radar.ov', statuses: 'radar.statuses', scen: 'radar.scen' };
+</script>
