@@ -8,7 +8,7 @@
 <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px">
 <header style="display: flex; flex-direction: column; gap: 4px">
 <h1 class="hd" style="margin: 0; font-size: 30px; font-weight: 700">Import date</h1>
-<div style="color: #5B6472">Încarci exportul Excel din eKIWI, iar platforma își actualizează dosarele din el.</div>
+<div style="color: #5B6472">Încarci exportul Excel din eKIWI: cel de dosare actualizează dosarele, cel de clienți (cu CNP) completează datele de naștere.</div>
 </header>
 
 <section aria-label="Date existente" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
@@ -21,7 +21,7 @@
 </section>
 
 <section class="cd" aria-labelledby="i-up" style="padding: 22px; display: flex; flex-direction: column; gap: 14px">
-<h2 id="i-up" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Încarcă exportul eKIWI</h2>
+<h2 id="i-up" class="hd" style="margin: 0; font-size: 18px; font-weight: 700">Încarcă un export eKIWI</h2>
 <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
 <label class="bt fx" for="i-file" style="border: 0; background: #0B0F1A; color: #FFFFFF">Alege fișierul .xlsx</label>
 <input id="i-file" type="file" accept=".xlsx" onChange="{{onFile}}" style="position: absolute; width: 1px; height: 1px; opacity: 0">
@@ -44,7 +44,7 @@
 <sc-for list="{{notes}}" as="n" hint-placeholder-count="0">
 <div style="border-radius: 12px; background: #FDF6E3; color: #5F3B06; padding: 10px 14px; font-size: 13px; line-height: 1.5">{{n}}</div>
 </sc-for>
-<div style="font-size: 13px; color: #3D4653; line-height: 1.5">Importul înlocuiește lista de dosare: cele care nu mai apar în fișier se șterg din platformă. Notițele, stadiile, ipotezele și fișierele încărcate rămân neschimbate.</div>
+<div style="font-size: 13px; color: #3D4653; line-height: 1.5">{{replaceNote}}</div>
 <sc-if value="{{needConfirm}}" hint-placeholder-val="{{ false }}">
 <label style="display: flex; align-items: flex-start; gap: 10px; border-radius: 12px; background: #FFF1E8; color: #7C2D12; padding: 12px 14px; line-height: 1.5">
 <input type="checkbox" checked="{{confirmed}}" onChange="{{onConfirm}}" style="width: 18px; height: 18px; margin-top: 2px">
@@ -62,7 +62,7 @@
 
 <section class="cd" aria-labelledby="i-cols" style="padding: 6px 0 10px">
 <h2 id="i-cols" class="hd" style="margin: 0; padding: 14px 20px 8px; font-size: 18px; font-weight: 700">Coloanele citite din fișier</h2>
-<div style="padding: 0 20px 8px; font-size: 13px; color: #5B6472; line-height: 1.5">Platforma caută foaia „eKIWI” și citește coloanele după numele din primul rând. Ordinea coloanelor nu contează.</div>
+<div style="padding: 0 20px 8px; font-size: 13px; color: #5B6472; line-height: 1.5">Platforma caută foaia „eKIWI” și citește coloanele după numele din primul rând. Ordinea coloanelor nu contează. Exportul de clienți e recunoscut după coloanele „ID client” și „CNP”.</div>
 <div style="overflow-x: auto">
 <table style="width: 100%; border-collapse: collapse; min-width: 520px">
 <thead><tr>
@@ -112,6 +112,26 @@ const COLUMNS = [
 const DATES = ['data_dep', 'data_tras', 'data_nastere'];
 const NUMBERS = ['id', 'client_id', 'ani_fixa', 'rata_dobanda', 'suma_depusa', 'suma_trasa'];
 
+// Data nașterii din CNP. Prima cifră dă sexul și secolul: 1-2 → 1900, 3-4 → 1800, 5-6 → 2000.
+// 7, 8 (rezidenți) și 9 (străini) nu spun secolul sigur, așa că acele CNP-uri sunt sărite.
+// Întoarce AAAA-LL-ZZ sau motivul pentru care nu s-a putut citi.
+const CNP_W = [2, 7, 9, 1, 4, 6, 3, 5, 8, 2, 7, 9];
+function birthFromCnp(v) {
+  let s = String(v === null || v === undefined ? '' : v).trim();
+  if (/^\d+\.0+$/.test(s)) s = s.split('.')[0];
+  if (!/^\d{13}$/.test(s)) return { bad: 'format' };
+  let k = 0;
+  for (let i = 0; i < 12; i++) k += (+s[i]) * CNP_W[i];
+  k %= 11; if (k === 10) k = 1;
+  if (k !== +s[12]) return { bad: 'control' };
+  const cent = { 1: 1900, 2: 1900, 3: 1800, 4: 1800, 5: 2000, 6: 2000 }[s[0]];
+  if (!cent) return { bad: 'secol' };
+  const y = cent + +s.slice(1, 3), m = +s.slice(3, 5), d = +s.slice(5, 7);
+  const dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d || dt > new Date()) return { bad: 'data' };
+  return { iso: y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0') };
+}
+
 class Component extends DCLogic {
   constructor(p) { super(p); this.state = { fileName: '', parsed: null, err: '', busy: false, done: 0, confirmed: false }; }
   fmt(n) { return Math.round(n).toLocaleString('ro-RO'); }
@@ -121,6 +141,9 @@ class Component extends DCLogic {
       const sheets = await XLSXLITE.read(await file.arrayBuffer());
       const names = Object.keys(sheets);
       const norm = (v) => String(v === null || v === undefined ? '' : v).trim().toLowerCase();
+      // Exportul de clienți eKIWI: coloanele „ID client” și „CNP”.
+      const cliSheet = names.find((n) => sheets[n].length && sheets[n][0].some((h) => norm(h) === 'id client') && sheets[n][0].some((h) => norm(h) === 'cnp'));
+      if (cliSheet) { await this.parseClienti(cliSheet, sheets[cliSheet], norm); return; }
       const hasIds = (rows) => rows.length && rows[0].some((h) => norm(h) === 'id_dosar') && rows[0].some((h) => norm(h) === 'id_client');
       const sheet = names.find((n) => norm(n) === 'ekiwi' && hasIds(sheets[n])) || names.find((n) => hasIds(sheets[n]));
       if (!sheet) throw new Error('Nu am găsit în fișier o foaie cu coloanele ID_DOSAR și ID_CLIENT. Foile găsite: ' + names.join(', ') + '.');
@@ -151,15 +174,51 @@ class Component extends DCLogic {
       const list = Array.from(byId.values());
       if (!list.length) throw new Error('Foaia „' + sheet + '” nu conține niciun dosar valid.');
       const dates = list.map((o) => o.data_dep).filter(Boolean).sort();
-      this.setState({ parsed: { sheet, list, skipped, dupes, badDate, missingOpt, clients: new Set(list.map((o) => o.client_id)).size, drawn: list.filter((o) => o.suma_trasa > 0).length, from: dates[0] || '', to: dates[dates.length - 1] || '' } });
+      this.setState({ parsed: { kind: 'dosare', sheet, list, skipped, dupes, badDate, missingOpt, clients: new Set(list.map((o) => o.client_id)).size, drawn: list.filter((o) => o.suma_trasa > 0).length, from: dates[0] || '', to: dates[dates.length - 1] || '' } });
     } catch (e) {
       this.setState({ err: e && e.message ? e.message : 'Nu am putut citi fișierul.' });
     }
+  }
+  async parseClienti(sheet, rows, norm) {
+    const head = rows[0].map(norm);
+    const iId = head.indexOf('id client'), iCnp = head.indexOf('cnp');
+    const known = new Set(((await DATA.load('clients')) || []).map((c) => c.id));
+    const byId = new Map();
+    const bad = { lipsa: 0, format: 0, control: 0, secol: 0, data: 0 };
+    let total = 0;
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || !r.some((v) => v !== null && v !== '')) continue;
+      const id = Number(r[iId]);
+      if (!id || !isFinite(id)) continue;
+      total++;
+      if (r[iCnp] === null || r[iCnp] === undefined || String(r[iCnp]).trim() === '') { bad.lipsa++; continue; }
+      const b = birthFromCnp(r[iCnp]);
+      if (b.bad) { bad[b.bad]++; continue; }
+      byId.set(id, { client_id: id, data_nastere: b.iso });
+    }
+    const list = Array.from(byId.values());
+    if (!list.length) throw new Error('Foaia „' + sheet + '” nu conține niciun CNP din care să pot citi data nașterii.');
+    this.setState({ parsed: { kind: 'clienti', sheet, list, total, bad, matched: list.filter((x) => known.has(x.client_id)).length } });
   }
   async run() {
     const p = this.state.parsed;
     if (!p || this.state.busy) return;
     this.setState({ busy: true, done: 0, err: '' });
+    if (p.kind === 'clienti') {
+      try {
+        const SIZE = 500;
+        for (let i = 0; i < p.list.length; i += SIZE) {
+          await API.send('POST', '/api/clienti/import', { rows: p.list.slice(i, i + SIZE) });
+          this.setState({ done: Math.min(p.list.length, i + SIZE) });
+        }
+        await APP.reload('Main');
+      } catch (e) {
+        const info = e && e.info && e.info.error;
+        this.setState({ busy: false, err: 'Importul clienților s-a oprit' + (info ? ': ' + info : '.') + ' Ce s-a salvat deja rămâne; poți relua importul.' });
+      }
+      return;
+    }
     try {
       const { importId } = await API.send('POST', '/api/import/start', { fileName: this.state.fileName, total: p.list.length });
       const SIZE = 200;
@@ -180,14 +239,21 @@ class Component extends DCLogic {
     const m = DATA.meta || {};
     const ro = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(0, 4) : '—');
     const notes = [];
-    if (p) {
+    const cli = !!p && p.kind === 'clienti';
+    if (cli) {
+      const b = p.bad;
+      if (p.list.length - p.matched) notes.push(this.fmt(p.list.length - p.matched) + ' clienți nu au încă niciun dosar în platformă. Data lor de naștere se salvează și apare când le vin dosare.');
+      if (b.lipsa) notes.push(this.fmt(b.lipsa) + ' clienți nu au CNP.');
+      if (b.format + b.control + b.data) notes.push(this.fmt(b.format + b.control + b.data) + ' CNP-uri nu sunt valide (lungime, cifră de control sau dată greșită) și vor fi sărite.');
+      if (b.secol) notes.push(this.fmt(b.secol) + ' CNP-uri de rezident sau cetățean străin (încep cu 7, 8 sau 9) nu arată sigur anul nașterii și vor fi sărite.');
+    } else if (p) {
       if (p.skipped) notes.push(this.fmt(p.skipped) + ' rânduri fără ID_DOSAR, ID_CLIENT sau NUME_CLIENT vor fi sărite.');
       if (p.dupes) notes.push(this.fmt(p.dupes) + ' dosare apar de mai multe ori în fișier; păstrez ultima apariție.');
       if (p.badDate) notes.push(this.fmt(p.badDate) + ' dosare nu au o dată de depunere pe care să o pot citi.');
       if (p.missingOpt.length) notes.push('Coloane opționale care lipsesc din fișier: ' + p.missingOpt.join(', ') + '.');
     }
-    const drop = p && m.count ? m.count - p.list.length : 0;
-    const needConfirm = !!p && m.count > 0 && p.list.length < m.count * 0.8;
+    const drop = p && !cli && m.count ? m.count - p.list.length : 0;
+    const needConfirm = !!p && !cli && m.count > 0 && p.list.length < m.count * 0.8;
     const disabled = !p || s.busy || (needConfirm && !s.confirmed);
     const pct = p && p.list.length ? Math.round(s.done / p.list.length * 100) : 0;
     return {
@@ -200,7 +266,12 @@ class Component extends DCLogic {
       onFile: (e) => { const f = e.target.files && e.target.files[0]; if (f && !this.state.busy) this.parse(f); },
       err: s.err,
       hasParsed: !!p,
-      summary: p ? [
+      summary: cli ? [
+        { l: 'Foaie citită', v: p.sheet },
+        { l: 'Clienți în fișier', v: this.fmt(p.total) },
+        { l: 'Cu dată de naștere din CNP', v: this.fmt(p.list.length) },
+        { l: 'Dintre ei, cu dosare în platformă', v: this.fmt(p.matched) }
+      ] : p ? [
         { l: 'Foaie citită', v: p.sheet },
         { l: 'Dosare', v: this.fmt(p.list.length) },
         { l: 'Clienți', v: this.fmt(p.clients) },
@@ -214,7 +285,8 @@ class Component extends DCLogic {
       run: () => this.run(),
       runDisabled: disabled,
       runStyle: 'border:0;' + (disabled ? 'background:#D3D8E0;color:#5B6472;cursor:not-allowed' : 'background:#0B6B4A;color:#FFFFFF'),
-      runLabel: s.busy ? 'Se importă… ' + this.fmt(s.done) + ' din ' + this.fmt(p ? p.list.length : 0) : (p ? 'Importă ' + this.fmt(p.list.length) + ' dosare' : 'Importă'),
+      runLabel: s.busy ? 'Se importă… ' + this.fmt(s.done) + ' din ' + this.fmt(p ? p.list.length : 0) : (p ? 'Importă ' + this.fmt(p.list.length) + (cli ? ' date de naștere' : ' dosare') : 'Importă'),
+      replaceNote: cli ? 'Se completează doar data nașterii pe fiecare client, calculată în browser din CNP. CNP-ul nu se trimite și nu se păstrează în platformă. Dosarele, notițele și restul datelor nu se schimbă.' : 'Importul înlocuiește lista de dosare: cele care nu mai apar în fișier se șterg din platformă. Notițele, stadiile, ipotezele și fișierele încărcate rămân neschimbate.',
       busy: s.busy, pct,
       bar: 'height:100%;border-radius:999px;background:#0B6B4A;width:' + pct + '%',
       cols: COLUMNS.map((c) => ({ x: c[0], l: c[2], req: c[3] ? 'da' : 'opțional' }))

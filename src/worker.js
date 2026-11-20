@@ -150,7 +150,9 @@ const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 // ---------- Dosare și import ----------
 
 async function getDosare(env) {
-  const rows = await env.DB.prepare(`SELECT ${COLS.join(', ')} FROM dosare ORDER BY data_dep DESC, id DESC`).raw();
+  // Data nașterii din importul de clienți (din CNP) are prioritate față de cea din dosar.
+  const sel = COLS.map((c) => (c === 'data_nastere' ? 'COALESCE(c.data_nastere, d.data_nastere)' : 'd.' + c)).join(', ');
+  const rows = await env.DB.prepare(`SELECT ${sel} FROM dosare d LEFT JOIN clienti c ON c.client_id = d.client_id ORDER BY d.data_dep DESC, d.id DESC`).raw();
   const last = await env.DB.prepare('SELECT file_name, total, finished_at FROM imports WHERE finished_at IS NOT NULL ORDER BY finished_at DESC LIMIT 1').first();
   return json({ cols: COLS, rows, meta: { count: rows.length, importedAt: last ? last.finished_at : null, fileName: last ? last.file_name : null } });
 }
@@ -195,6 +197,23 @@ async function importFinish(request, env) {
     env.DB.prepare('UPDATE imports SET finished_at = ?, total = ? WHERE id = ?').bind(nowIso(), got.n, imp.id),
   ]);
   return json({ ok: true, total: got.n, removed: res[0].meta.changes });
+}
+
+// Importul de clienți: completează data nașterii pe client. Nu șterge nimic.
+async function importClienti(request, env, user) {
+  const b = await body(request, 200_000);
+  if (!Array.isArray(b.rows) || b.rows.length === 0 || b.rows.length > 1000) return fail(400, 'Lot invalid.');
+  const now = nowIso();
+  const stmts = [];
+  for (const r of b.rows) {
+    const id = Math.floor(num(r.client_id));
+    const bd = isoDate(r.data_nastere);
+    if (!id || !bd) return fail(400, 'Rând fără ID client sau dată de naștere validă.');
+    stmts.push(env.DB.prepare('INSERT INTO clienti (client_id, data_nastere, updated_at, updated_by) VALUES (?, ?, ?, ?) ON CONFLICT (client_id) DO UPDATE SET data_nastere = excluded.data_nastere, updated_at = excluded.updated_at, updated_by = excluded.updated_by')
+      .bind(id, bd, now, user.email));
+  }
+  await env.DB.batch(stmts);
+  return json({ ok: true, rows: stmts.length });
 }
 
 // ---------- Stare salvată ----------
@@ -364,6 +383,7 @@ async function api(request, env, url) {
   if (path === '/api/import/start' && method === 'POST') return importStart(request, env, user);
   if (path === '/api/import/chunk' && method === 'POST') return importChunk(request, env);
   if (path === '/api/import/finish' && method === 'POST') return importFinish(request, env);
+  if (path === '/api/clienti/import' && method === 'POST') return importClienti(request, env, user);
   if (path === '/api/state' && method === 'GET') return getState(env);
   if ((m = /^\/api\/state\/([^/]+)$/.exec(path)) && method === 'PUT') return putState(request, env, user, m[1]);
   if ((m = /^\/api\/dosare\/(\d+)\/files$/.exec(path))) {
