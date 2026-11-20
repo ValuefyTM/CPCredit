@@ -4,7 +4,7 @@ Platformă pentru broker de credite: dosare, clienți, radar de refinanțare, si
 
 Rulează pe Cloudflare: un Worker (API + interfață), o bază de date D1 pentru dosare și ce introduce brokerul, și un bucket R2 separat pentru fișierele încărcate pe dosare.
 
-> **Stadiu:** prima versiune. Interfața se construiește și API-ul răspunde local, dar testul cap-coadă în browser (import, salvare, fișiere) nu a fost încă încheiat și platforma nu a fost încă instalată în Cloudflare.
+> **Stadiu:** prima versiune. Testată local cu `wrangler dev`: importul exportului eKIWI, toate ecranele, salvarea după reîncărcare și fișierele pe dosar. Verificarea Cloudflare Access a fost testată doar cu chei generate local. Platforma nu a fost încă instalată în Cloudflare.
 
 ## Structură
 
